@@ -1,6 +1,6 @@
 /* ==========================================================================
    PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
-   MAIN STYLESHEET - TACTICAL DARK MODE & ACCESSIBILITY
+   MAIN STYLESHEET - TACTICAL DARK MODE & ACCESSIBILITY (ARIAL CLEAN STACK)
    ========================================================================== */
 
 :root {
@@ -46,9 +46,9 @@
   --f1-purple: #a855f7;
   --f1-blue: #3b82f6;
 
-  /* Typography */
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", "Consolas", "Courier New", monospace;
+  /* Clean, Straight Font Stack - Arial for Zero Eye Fatigue */
+  --font-ui: Arial, Helvetica, "Nimbus Sans L", sans-serif;
+  --font-mono: Arial, Helvetica, "Nimbus Sans L", sans-serif;
 
   /* Sizing & Geometry - Min 56dp for Tremor/Dizziness Ergonomics */
   --touch-min-target: 56px;
@@ -78,6 +78,7 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-ui);
 }
 
 html {
@@ -102,12 +103,14 @@ body {
   overflow-x: hidden;
   user-select: none;
   -webkit-user-select: none;
+  font-family: var(--font-ui);
 }
 
 /* Allow text selection in readable outputs and inputs */
 input, textarea, select, .selectable-text {
   user-select: text;
   -webkit-user-select: text;
+  font-family: var(--font-ui);
 }
 
 /* App Container */
@@ -127,7 +130,7 @@ input, textarea, select, .selectable-text {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(7, 11, 16, 0.92);
+  background: rgba(7, 11, 16, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-tactical);
@@ -157,7 +160,7 @@ input, textarea, select, .selectable-text {
 .brand-title {
   font-size: 0.95rem;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--text-pure);
   display: flex;
@@ -172,13 +175,14 @@ input, textarea, select, .selectable-text {
   border-radius: 4px;
   background: var(--f1-green-subtle);
   border: 1px solid rgba(0, 255, 157, 0.3);
+  font-weight: bold;
 }
 
 .brand-subtitle {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
@@ -189,7 +193,6 @@ input, textarea, select, .selectable-text {
 }
 
 .status-pill {
-  font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 6px 10px;
@@ -255,7 +258,7 @@ input, textarea, select, .selectable-text {
   left: 0;
   right: 0;
   z-index: 150;
-  background: rgba(5, 8, 12, 0.95);
+  background: rgba(5, 8, 12, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-tactical);
@@ -285,9 +288,9 @@ input, textarea, select, .selectable-text {
   min-width: 60px;
   padding: 6px 10px;
   border-radius: var(--radius-md);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
   cursor: pointer;
   transition: color var(--transition-fast), background-color var(--transition-fast);
@@ -333,6 +336,7 @@ input, textarea, select, .selectable-text {
 
 .text-mono {
   font-family: var(--font-mono);
+  font-weight: bold;
 }
 
 .badge {
@@ -342,7 +346,7 @@ input, textarea, select, .selectable-text {
   border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 

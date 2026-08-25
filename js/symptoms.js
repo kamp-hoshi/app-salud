@@ -1,6 +1,6 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * MODULE 3: TACTICAL SYMPTOM AUDIT (1-TOUCH ERGONOMIC CHIPS)
+ * MODULE 3: TACTICAL SYMPTOM AUDIT (1-TOUCH ERGONOMIC CHIPS & OFFICIAL SAVE)
  */
 
 import { store } from './state.js';
@@ -49,12 +49,16 @@ export class SymptomAuditManager {
   constructor() {
     this.container = document.getElementById('symptoms-audit-container');
     this.counterBadge = document.getElementById('symptoms-total-count');
+    this.btnSave = document.getElementById('btn-save-symptoms');
     this.btnClear = document.getElementById('btn-clear-symptoms');
+    this.savedBanner = document.getElementById('symptoms-saved-banner');
+    this.savedTimestampText = document.getElementById('symptoms-saved-timestamp');
   }
 
   init() {
     this.render();
     this.bindEvents();
+    this.syncUI();
     store.on('today:updated', () => this.syncUI());
   }
 
@@ -106,11 +110,32 @@ export class SymptomAuditManager {
   }
 
   bindEvents() {
+    // Official Save Button for Daily Symptoms
+    if (this.btnSave) {
+      this.btnSave.addEventListener('click', () => {
+        soundFx.playHydrationSound();
+        const savedTime = store.saveSymptomsOfficial();
+        this.showSavedConfirmation(savedTime);
+      });
+    }
+
     if (this.btnClear) {
       this.btnClear.addEventListener('click', () => {
         soundFx.playTactileClick();
         store.clearSymptoms();
       });
+    }
+  }
+
+  showSavedConfirmation(timeStr) {
+    if (this.savedBanner) {
+      this.savedBanner.classList.remove('hidden');
+      if (this.savedTimestampText) {
+        this.savedTimestampText.textContent = `Registrado: ${timeStr}`;
+      }
+      setTimeout(() => {
+        if (this.savedBanner) this.savedBanner.classList.add('hidden');
+      }, 4000);
     }
   }
 
@@ -125,12 +150,16 @@ export class SymptomAuditManager {
       });
     }
     this.updateCountBadge();
+
+    if (store.today.symptomsSavedAt && this.savedTimestampText) {
+      this.savedTimestampText.textContent = `Último registro guardado: ${store.today.symptomsSavedAt}`;
+    }
   }
 
   updateCountBadge() {
     const count = (store.today.symptoms || []).length;
     if (this.counterBadge) {
-      this.counterBadge.textContent = `${count} ACTIVO${count !== 1 ? 'S' : ''}`;
+      this.counterBadge.textContent = `${count} SELECCIONADO${count !== 1 ? 'S' : ''}`;
       if (count > 4) {
         this.counterBadge.className = 'badge badge-red';
       } else if (count > 0) {

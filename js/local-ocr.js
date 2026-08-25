@@ -1,7 +1,7 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * MODULE 2A: LOCAL ON-DEVICE OCR & REGEX PARSER (MI FITNESS / EUFYLIFE)
- * 100% CLIENT-SIDE - NO API KEYS - 100% OFFLINE READY
+ * MODULE 2A: LOCAL ON-DEVICE OCR & EXPANDED REGEX PARSER (MI FITNESS / EUFYLIFE)
+ * EXTRACTS: RHR, DEEP SLEEP, TOTAL SLEEP, SPO2 %, STRESS LEVEL & WEIGHT
  */
 
 import { store } from './state.js';
@@ -16,13 +16,14 @@ export class LocalOCRScanner {
     this.progressText = document.getElementById('ocr-progress-text');
     this.resultsCard = document.getElementById('ocr-results-card');
     
-    // Manual Input Fields
+    // Manual Input Fields (Extended)
     this.inputRhr = document.getElementById('manual-rhr-input');
     this.inputSleep = document.getElementById('manual-sleep-input');
+    this.inputTotalSleep = document.getElementById('manual-totalsleep-input');
+    this.inputSpo2 = document.getElementById('manual-spo2-input');
+    this.inputStress = document.getElementById('manual-stress-input');
     this.inputWeight = document.getElementById('manual-weight-input');
     this.btnSaveMetrics = document.getElementById('btn-save-manual-metrics');
-
-    this.tesseractLoaded = false;
   }
 
   init() {
@@ -38,6 +39,15 @@ export class LocalOCRScanner {
     }
     if (this.inputSleep && t.deepSleepHours !== null && t.deepSleepHours !== undefined) {
       this.inputSleep.value = t.deepSleepHours;
+    }
+    if (this.inputTotalSleep && t.totalSleepHours !== null && t.totalSleepHours !== undefined) {
+      this.inputTotalSleep.value = t.totalSleepHours;
+    }
+    if (this.inputSpo2 && t.spo2 !== null && t.spo2 !== undefined) {
+      this.inputSpo2.value = t.spo2;
+    }
+    if (this.inputStress && t.stressLevel !== null && t.stressLevel !== undefined) {
+      this.inputStress.value = t.stressLevel;
     }
     if (this.inputWeight && t.weightKg !== null && t.weightKg !== undefined) {
       this.inputWeight.value = t.weightKg;
@@ -84,11 +94,17 @@ export class LocalOCRScanner {
   saveManualInputs() {
     const rhrVal = this.inputRhr ? parseInt(this.inputRhr.value, 10) : null;
     const sleepVal = this.inputSleep ? parseFloat(this.inputSleep.value) : null;
+    const totalSleepVal = this.inputTotalSleep ? parseFloat(this.inputTotalSleep.value) : null;
+    const spo2Val = this.inputSpo2 ? parseInt(this.inputSpo2.value, 10) : null;
+    const stressVal = this.inputStress ? parseInt(this.inputStress.value, 10) : null;
     const weightVal = this.inputWeight ? parseFloat(this.inputWeight.value) : null;
 
     store.updateToday({
       rhr: !isNaN(rhrVal) && rhrVal > 0 ? rhrVal : null,
-      deepSleepHours: !isNaN(sleepVal) && sleepVal > 0 ? sleepVal : null,
+      deepSleepHours: !isNaN(sleepVal) && sleepVal >= 0 ? sleepVal : null,
+      totalSleepHours: !isNaN(totalSleepVal) && totalSleepVal >= 0 ? totalSleepVal : null,
+      spo2: !isNaN(spo2Val) && spo2Val > 0 ? Math.min(100, spo2Val) : null,
+      stressLevel: !isNaN(stressVal) && stressVal >= 0 ? Math.min(100, stressVal) : null,
       weightKg: !isNaN(weightVal) && weightVal > 0 ? weightVal : null
     });
 
@@ -97,7 +113,7 @@ export class LocalOCRScanner {
     const banner = document.getElementById('metrics-saved-banner');
     if (banner) {
       banner.classList.remove('hidden');
-      setTimeout(() => banner.classList.add('hidden'), 3000);
+      setTimeout(() => banner.classList.add('hidden'), 3500);
     }
   }
 
@@ -111,17 +127,17 @@ export class LocalOCRScanner {
     this.showProgress(10, 'Pre-procesando imagen en chasis local...');
 
     try {
-      // 1. Client-Side Preprocessing via Canvas (Auto-contrast & Binarization)
+      // 1. Client-Side Preprocessing via Canvas
       const processedImageBlob = await this.preprocessImage(file);
       
-      this.showProgress(35, 'Iniciando motor OCR en dispositivo...');
+      this.showProgress(35, 'Iniciando motor OCR en el dispositivo...');
 
-      // 2. Load Tesseract.js locally if available, or fall back to OCR parser
+      // 2. Perform On-Device OCR
       const extractedText = await this.performClientOCR(processedImageBlob);
       
-      this.showProgress(85, 'Analizando telemetría biométrica con Regex...');
+      this.showProgress(85, 'Extrayendo RHR, Sueño, SpO2 y Estrés...');
 
-      // 3. Parse with Specialized Regular Expressions for Mi Fitness & EufyLife
+      // 3. Parse with Expanded Regex for Mi Fitness & EufyLife
       const parsedData = this.parseTelemetryText(extractedText);
 
       this.showProgress(100, 'Telemetría extraída con éxito.');
@@ -135,7 +151,7 @@ export class LocalOCRScanner {
     } catch (err) {
       console.error('Error during local OCR processing:', err);
       this.hideProgress();
-      alert('No se pudo completar el escaneo OCR automáticamente. Puedes ingresar los datos manualmente en las casillas inferiores.');
+      alert('No se pudo leer la captura automáticamente. Puedes ingresar los datos manualmente en las casillas.');
     }
   }
 
@@ -157,7 +173,7 @@ export class LocalOCRScanner {
     }
   }
 
-  // Canvas Preprocessing: Grayscale + High-Pass Contrast to maximize OCR accuracy
+  // Canvas Preprocessing
   preprocessImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -190,15 +206,13 @@ export class LocalOCRScanner {
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Get image data for grayscale & contrast enhancement
+          // Contrast boost
           const imgData = ctx.getImageData(0, 0, width, height);
           const d = imgData.data;
 
           for (let i = 0; i < d.length; i += 4) {
-            // Standard luminance formula
             const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-            // High contrast boost for digits
-            const contrastVal = gray > 140 ? Math.min(255, gray * 1.2) : Math.max(0, gray * 0.8);
+            const contrastVal = gray > 140 ? Math.min(255, gray * 1.25) : Math.max(0, gray * 0.75);
             d[i] = contrastVal;
             d[i + 1] = contrastVal;
             d[i + 2] = contrastVal;
@@ -220,9 +234,8 @@ export class LocalOCRScanner {
     });
   }
 
-  // Client-Side OCR Execution using Tesseract.js Worker
+  // Client-Side OCR Execution
   async performClientOCR(imageBlob) {
-    // Check if Tesseract is available on window
     if (typeof window.Tesseract !== 'undefined') {
       const result = await window.Tesseract.recognize(
         imageBlob,
@@ -239,9 +252,8 @@ export class LocalOCRScanner {
       return result.data ? result.data.text : '';
     }
 
-    // Fallback: Dynamically load Tesseract.js CDN if not yet present
     return new Promise((resolve) => {
-      this.showProgress(40, 'Cargando motor de reconocimiento óptico...');
+      this.showProgress(40, 'Cargando motor OCR en dispositivo...');
       
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
@@ -269,7 +281,7 @@ export class LocalOCRScanner {
       };
 
       script.onerror = () => {
-        console.warn('Could not load Tesseract script dynamically (offline fallback).');
+        console.warn('Could not load Tesseract dynamically (offline fallback).');
         resolve('');
       };
 
@@ -277,27 +289,29 @@ export class LocalOCRScanner {
     });
   }
 
-  // Specialized Regex Telemetry Parser for Mi Fitness, EufyLife, and Health Devices
+  // Expanded Regex Telemetry Parser for Mi Fitness & EufyLife
   parseTelemetryText(rawText) {
-    if (!rawText) return { rhr: null, deep_sleep_hours: null, weight_kg: null, app_detected: 'Manual' };
+    if (!rawText) return { rhr: null, deep_sleep_hours: null, total_sleep_hours: null, spo2: null, stress_level: null, weight_kg: null, app_detected: 'Manual' };
 
     const text = rawText.replace(/\r?\n/g, ' ').toLowerCase();
     const result = {
       rhr: null,
       deep_sleep_hours: null,
+      total_sleep_hours: null,
+      spo2: null,
+      stress_level: null,
       weight_kg: null,
-      app_detected: 'Desconocida'
+      app_detected: 'Mi Fitness / Salud'
     };
 
     // 1. App Detection
     if (text.includes('fitness') || text.includes('xiaomi') || text.includes('mi fit') || text.includes('band')) {
       result.app_detected = 'Mi Fitness';
-    } else if (text.includes('eufy') || text.includes('life') || text.includes('scale') || text.includes('báscula') || text.includes('bascula')) {
+    } else if (text.includes('eufy') || text.includes('scale') || text.includes('báscula') || text.includes('bascula')) {
       result.app_detected = 'EufyLife / Báscula';
     }
 
     // 2. Resting Heart Rate (RHR / Pulso en Reposo)
-    // Matches: "reposo: 68", "rhr 62 bpm", "pulso 74", "frecuencia cardíaca en reposo 59", "64 bpm"
     const rhrPatterns = [
       /(?:reposo|rhr|frecuencia\s+en\s+reposo|pulso\s+en\s+reposo)\D{0,15}(\d{2,3})/i,
       /(?:pulso|frecuencia|card[ií]ac[ao]|bpm)\D{0,10}(\d{2,3})\s*(?:bpm|lpm)?/i,
@@ -315,27 +329,23 @@ export class LocalOCRScanner {
       }
     }
 
-    // 3. Deep Sleep Hours (Sueño Profundo)
-    // Matches: "profundo 1h 45m", "sueño profundo: 2.3 hrs", "deep sleep 1 h 20 min"
+    // 3. Deep Sleep (Sueño Profundo)
     const deepSleepPatterns = [
       /(?:profundo|deep)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min|mins?|minutos?)?/i,
-      /(?:profundo|deep)\D{0,10}(\d+[.,]\d+)\s*(?:h|hrs?|horas?)/i,
-      /(?:sueño|sueno|sleep)\D{0,15}(\d+)\s*(?:h|hrs?)\s*(\d+)?\s*(?:m|min)?/i
+      /(?:profundo|deep)\D{0,10}(\d+[.,]\d+)\s*(?:h|hrs?|horas?)/i
     ];
 
     for (const pat of deepSleepPatterns) {
       const match = text.match(pat);
       if (match) {
         if (match[2] !== undefined) {
-          // Format: 1h 45m
           const hrs = parseInt(match[1], 10) || 0;
           const mins = parseInt(match[2], 10) || 0;
           result.deep_sleep_hours = parseFloat((hrs + (mins / 60)).toFixed(2));
           break;
         } else if (match[1]) {
-          // Format: 1.75h
           const val = parseFloat(match[1].replace(',', '.'));
-          if (val > 0 && val <= 24) {
+          if (val > 0 && val <= 15) {
             result.deep_sleep_hours = parseFloat(val.toFixed(2));
             break;
           }
@@ -343,8 +353,66 @@ export class LocalOCRScanner {
       }
     }
 
-    // 4. Weight in KG (Peso corporal)
-    // Matches: "64.5 kg", "peso 58,2", "weight 72.0 kg"
+    // 4. Total Sleep (Sueño Total)
+    const totalSleepPatterns = [
+      /(?:total|sueño\s+total|duraci[oó]n\s+del\s+sueño)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min|mins?)?/i,
+      /(?:sueño|sueno|sleep)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min)?/i,
+      /(\d+)\s*(?:h|hrs)\s*(\d+)\s*(?:m|min)/i
+    ];
+
+    for (const pat of totalSleepPatterns) {
+      const match = text.match(pat);
+      if (match) {
+        if (match[2] !== undefined) {
+          const hrs = parseInt(match[1], 10) || 0;
+          const mins = parseInt(match[2], 10) || 0;
+          result.total_sleep_hours = parseFloat((hrs + (mins / 60)).toFixed(2));
+          break;
+        } else if (match[1]) {
+          const val = parseFloat(match[1].replace(',', '.'));
+          if (val > 0 && val <= 24) {
+            result.total_sleep_hours = parseFloat(val.toFixed(2));
+            break;
+          }
+        }
+      }
+    }
+
+    // 5. Blood Oxygen (SpO2 %)
+    const spo2Patterns = [
+      /(?:spo2|ox[ií]geno|saturaci[oó]n|o2)\D{0,10}(\d{2,3})\s*%?/i,
+      /(\d{2,3})\s*%\s*(?:spo2|ox[ií]geno)?/i
+    ];
+
+    for (const pat of spo2Patterns) {
+      const match = text.match(pat);
+      if (match && match[1]) {
+        const val = parseInt(match[1], 10);
+        if (val >= 70 && val <= 100) {
+          result.spo2 = val;
+          break;
+        }
+      }
+    }
+
+    // 6. Stress Level (Estrés 1-100)
+    const stressPatterns = [
+      /(?:estr[eé]s|stress|puntuaci[oó]n\s+de\s+estr[eé]s)\D{0,10}(\d{1,3})/i,
+      /(?:nivel\s+de\s+estr[eé]s)\D{0,8}(\d{1,3})/i
+    ];
+
+    for (const pat of stressPatterns) {
+      const match = text.match(pat);
+      if (match && match[1]) {
+        const val = parseInt(match[1], 10);
+        if (val >= 1 && val <= 100) {
+          result.stress_level = val;
+          break;
+        }
+      }
+    }
+
+    // 7. Weight in KG
     const weightPatterns = [
       /(?:peso|weight)\D{0,10}(\d{2,3}(?:[.,]\d{1,2})?)\s*(?:kg|kilos?)/i,
       /(\d{2,3}[.,]\d{1,2})\s*(?:kg|kilos?)/i,
@@ -366,20 +434,19 @@ export class LocalOCRScanner {
   }
 
   applyParsedData(data) {
-    if (this.inputRhr && data.rhr) {
-      this.inputRhr.value = data.rhr;
-    }
-    if (this.inputSleep && data.deep_sleep_hours) {
-      this.inputSleep.value = data.deep_sleep_hours;
-    }
-    if (this.inputWeight && data.weight_kg) {
-      this.inputWeight.value = data.weight_kg;
-    }
+    if (this.inputRhr && data.rhr) this.inputRhr.value = data.rhr;
+    if (this.inputSleep && data.deep_sleep_hours) this.inputSleep.value = data.deep_sleep_hours;
+    if (this.inputTotalSleep && data.total_sleep_hours) this.inputTotalSleep.value = data.total_sleep_hours;
+    if (this.inputSpo2 && data.spo2) this.inputSpo2.value = data.spo2;
+    if (this.inputStress && data.stress_level) this.inputStress.value = data.stress_level;
+    if (this.inputWeight && data.weight_kg) this.inputWeight.value = data.weight_kg;
 
-    // Automatically update store with detected metrics
     const updates = {};
     if (data.rhr) updates.rhr = data.rhr;
     if (data.deep_sleep_hours) updates.deepSleepHours = data.deep_sleep_hours;
+    if (data.total_sleep_hours) updates.totalSleepHours = data.total_sleep_hours;
+    if (data.spo2) updates.spo2 = data.spo2;
+    if (data.stress_level) updates.stressLevel = data.stress_level;
     if (data.weight_kg) updates.weightKg = data.weight_kg;
 
     if (Object.keys(updates).length > 0) {
@@ -387,20 +454,22 @@ export class LocalOCRScanner {
       soundFx.playHydrationSound();
     }
 
-    // Render results notification
     if (this.resultsCard) {
       this.resultsCard.classList.remove('hidden');
       this.resultsCard.innerHTML = `
-        <div style="font-size: 0.85rem; font-weight: 800; color: var(--f1-green); text-transform: uppercase;">
-          ⚡ Telemetría Detectada (${data.app_detected || 'Dispositivo'})
+        <div style="font-size: 0.88rem; font-weight: bold; color: var(--f1-green); text-transform: uppercase;">
+          ⚡ Telemetría Mi Fitness Detectada
         </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
-          ${data.rhr ? `<span class="badge badge-green">❤️ Reposo: ${data.rhr} bpm</span>` : ''}
-          ${data.deep_sleep_hours ? `<span class="badge badge-green">🌙 Sueño Prof.: ${data.deep_sleep_hours} h</span>` : ''}
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+          ${data.rhr ? `<span class="badge badge-green">❤️ Pulso: ${data.rhr} bpm</span>` : ''}
+          ${data.deep_sleep_hours ? `<span class="badge badge-green">🌙 Profundo: ${data.deep_sleep_hours} h</span>` : ''}
+          ${data.total_sleep_hours ? `<span class="badge badge-green">🛌 Total: ${data.total_sleep_hours} h</span>` : ''}
+          ${data.spo2 ? `<span class="badge badge-green">🫁 SpO2: ${data.spo2}%</span>` : ''}
+          ${data.stress_level ? `<span class="badge badge-green">⚡ Estrés: ${data.stress_level}/100</span>` : ''}
           ${data.weight_kg ? `<span class="badge badge-green">⚖️ Peso: ${data.weight_kg} kg</span>` : ''}
         </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
-          Datos sincronizados. Puedes modificarlos en las casillas inferiores en cualquier momento.
+        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">
+          Valores guardados y reflejados en tu tablero táctico.
         </div>
       `;
     }

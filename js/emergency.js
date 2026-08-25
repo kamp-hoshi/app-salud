@@ -47,24 +47,27 @@ export class EmergencyCrisisManager {
       this.btnCloseShield.addEventListener('click', () => {
         soundFx.playTactileClick();
         soundFx.stopMedicalAlarm();
+        this.shieldElement.classList.remove('alarm-active');
         this.shieldElement.classList.add('hidden');
         if (this.btnShieldAlarm) {
           this.btnShieldAlarm.classList.remove('sounding');
-          this.btnShieldAlarm.innerHTML = '<span>🔊</span> <span>ACTIVAR ALARMA SONORA</span>';
+          this.btnShieldAlarm.innerHTML = '<span>🔊</span> <span>ACTIVAR SIRENA MÉDICA</span>';
         }
       });
     }
 
-    // Toggle Audio Alarm
+    // Toggle Continuous Medical Siren & Visual Strobe
     if (this.btnShieldAlarm) {
       this.btnShieldAlarm.addEventListener('click', () => {
         const isSounding = soundFx.toggleMedicalAlarm();
         if (isSounding) {
           this.btnShieldAlarm.classList.add('sounding');
-          this.btnShieldAlarm.innerHTML = '<span>🔇</span> <span>SILENCIAR ALARMA</span>';
+          this.btnShieldAlarm.innerHTML = '<span>🔇</span> <span>SILENCIAR SIRENA</span>';
+          if (this.shieldElement) this.shieldElement.classList.add('alarm-active');
         } else {
           this.btnShieldAlarm.classList.remove('sounding');
-          this.btnShieldAlarm.innerHTML = '<span>🔊</span> <span>ACTIVAR ALARMA SONORA</span>';
+          this.btnShieldAlarm.innerHTML = '<span>🔊</span> <span>ACTIVAR SIRENA MÉDICA</span>';
+          if (this.shieldElement) this.shieldElement.classList.remove('alarm-active');
         }
       });
     }
@@ -160,12 +163,11 @@ export class EmergencyCrisisManager {
     const contactName = contact.name || 'Apoyo';
 
     const sendWithLocation = (lat, lng) => {
-      const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : 'Ubicación no disponible';
+      const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : 'Ubicación GPS no disponible';
       const message = `Hola ${contactName}, te escribo porque estoy teniendo una crisis de disautonomía / mareo fuerte y necesito tu ayuda o que estés atento/a. Estoy aquí: ${mapsUrl}`;
       const encodedMsg = encodeURIComponent(message);
       const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
       
-      // Native window redirection to avoid mobile popup blockers
       window.location.href = waUrl;
     };
 
@@ -204,7 +206,7 @@ export class EmergencyCrisisManager {
       html += `
         <a href="tel:${cleanPhone}" class="shield-call-btn">
           <span>📞 Llamar a ${this.escapeHtml(c.name)} (${this.escapeHtml(c.relation || 'ICE')})</span>
-          <span style="font-family: monospace;">${this.escapeHtml(c.phone)}</span>
+          <span style="font-family: Arial, sans-serif; font-weight: bold;">${this.escapeHtml(c.phone)}</span>
         </a>
       `;
     });
@@ -231,48 +233,48 @@ export class EmergencyCrisisManager {
     ctx.fillRect(0, 0, width, height);
 
     // Subtle Tactical Grid Borders
-    ctx.strokeStyle = '#222222';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 6;
     ctx.strokeRect(30, 30, width - 60, height - 60);
 
     // Top Red Caution Banner
     ctx.fillStyle = '#dc2626';
-    ctx.fillRect(50, 60, width - 100, 180);
+    ctx.fillRect(50, 60, width - 100, 200);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 6;
-    ctx.strokeRect(50, 60, width - 100, 180);
+    ctx.strokeRect(50, 60, width - 100, 200);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 54px sans-serif';
+    ctx.font = 'bold 54px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⚠️ ALERTA MÉDICA ⚠️', width / 2, 140);
-    ctx.font = 'bold 36px sans-serif';
-    ctx.fillText('CRISIS DE DISAUTONOMÍA / POTS', width / 2, 200);
+    ctx.fillText('🛑 ¡POR FAVOR AYÚDAME!', width / 2, 140);
+    ctx.font = 'bold 36px Arial, sans-serif';
+    ctx.fillText('ESTOY EN CRISIS Y NO PUEDO HABLAR', width / 2, 210);
 
     // Bystander Instructions Title
     ctx.textAlign = 'left';
     ctx.fillStyle = '#fde047'; // Bright Yellow
-    ctx.font = 'bold 44px sans-serif';
-    ctx.fillText('INSTRUCCIONES PARA TRANSEÚNTES:', 70, 310);
+    ctx.font = 'bold 44px Arial, sans-serif';
+    ctx.fillText('LEE ESTAS INSTRUCCIONES:', 70, 320);
 
     // 4 Crucial Steps Box
     const steps = [
       '1. NO ME LEVANTES BRUSCAMENTE.',
       '2. Ayúdame a recostarme en el suelo.',
-      '3. Eleva mis piernas a 45° (retorno sanguíneo).',
+      '3. Eleva mis piernas a 45° (retorno venoso).',
       '4. Asegura aire fresco y afloja ropa ajustada.'
     ];
 
-    let startY = 390;
+    let startY = 400;
     steps.forEach((step, i) => {
       ctx.fillStyle = i === 0 ? '#ff4d4d' : '#ffffff';
-      ctx.font = i === 0 ? 'bold 38px sans-serif' : 'bold 34px sans-serif';
+      ctx.font = i === 0 ? 'bold 40px Arial, sans-serif' : 'bold 36px Arial, sans-serif';
       ctx.fillText(step, 70, startY);
-      startY += 80;
+      startY += 85;
     });
 
     // Separator line
-    ctx.strokeStyle = '#444444';
+    ctx.strokeStyle = '#555555';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(70, startY + 20);
@@ -282,26 +284,26 @@ export class EmergencyCrisisManager {
     // Emergency Contacts Section
     startY += 90;
     ctx.fillStyle = '#4ade80'; // Green
-    ctx.font = 'bold 44px sans-serif';
+    ctx.font = 'bold 44px Arial, sans-serif';
     ctx.fillText('CONTACTOS DE EMERGENCIA (LLAMAR):', 70, startY);
 
-    startY += 70;
+    startY += 75;
     const contacts = p.contacts || [];
     if (contacts.length > 0) {
       contacts.forEach(c => {
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 38px sans-serif';
+        ctx.font = 'bold 38px Arial, sans-serif';
         ctx.fillText(`• ${c.name || 'Contacto'}:`, 70, startY);
         ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 44px monospace';
+        ctx.font = 'bold 44px Arial, sans-serif';
         ctx.fillText(`${c.phone || ''}`, 520, startY);
-        startY += 80;
+        startY += 85;
       });
     } else {
       ctx.fillStyle = '#9ca3af';
-      ctx.font = '32px sans-serif';
+      ctx.font = '32px Arial, sans-serif';
       ctx.fillText('No se han configurado contactos.', 70, startY);
-      startY += 70;
+      startY += 75;
     }
 
     // Medical Details & Diagnostic Box
@@ -313,22 +315,22 @@ export class EmergencyCrisisManager {
     ctx.strokeRect(70, startY, width - 140, 260);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = 'bold 28px Arial, sans-serif';
     ctx.fillText('DIAGNÓSTICO BASAL:', 100, startY + 55);
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 34px sans-serif';
+    ctx.font = 'bold 34px Arial, sans-serif';
     ctx.fillText(p.diagnosis || 'POTS / Disautonomía', 100, startY + 105);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = 'bold 28px Arial, sans-serif';
     ctx.fillText('TRATAMIENTO / NOTAS:', 100, startY + 165);
     ctx.fillStyle = '#f8fafc';
-    ctx.font = '28px sans-serif';
+    ctx.font = '28px Arial, sans-serif';
     ctx.fillText(p.medicationNotes ? p.medicationNotes.substring(0, 45) : (p.medicationType || 'Hidratación y electrolitos'), 100, startY + 215);
 
     // Footer
     ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 26px monospace';
+    ctx.font = 'bold 26px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('TARJETA MÉDICA PIT CREW • PANTALLA DE BLOQUEO PERMANENTE', width / 2, height - 70);
   }

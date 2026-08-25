@@ -1,9 +1,9 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * SERVICE WORKER - OFFLINE-FIRST CACHING STRATEGY
+ * SERVICE WORKER - OFFLINE-FIRST CACHING STRATEGY V4.1.0
  */
 
-const CACHE_NAME = 'pitcrew-telemetry-v4.0.0';
+const CACHE_NAME = 'pitcrew-telemetry-v4.1.0';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -53,7 +53,6 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - Cache First with Network Fallback
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests or external weather APIs (let them fetch live or fail gracefully)
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
@@ -84,7 +83,6 @@ self.addEventListener('fetch', (event) => {
         });
         return networkResponse;
       }).catch(() => {
-        // If offline and requesting an HTML page, return index.html
         if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
           return caches.match('./index.html');
         }

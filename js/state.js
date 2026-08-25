@@ -1,6 +1,6 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * STATE MANAGEMENT - LOCAL-FIRST REACTIVE STORE
+ * STATE MANAGEMENT - LOCAL-FIRST REACTIVE STORE (EXTENDED TELEMETRY)
  */
 
 const STORAGE_KEYS = {
@@ -30,7 +30,7 @@ class StateStore {
     const savedToday = this.load(STORAGE_KEYS.TODAY, null);
 
     if (savedToday && savedToday.date === todayDate) {
-      this.today = savedToday;
+      this.today = { ...this.createDefaultDayLog(todayDate), ...savedToday };
     } else {
       // Archive previous day if needed
       if (savedToday && savedToday.date) {
@@ -58,15 +58,19 @@ class StateStore {
       battery: 70, // 1% to 100%
       hydrationMl: 0,
       electrolytesLogged: false,
-      rhr: null, // Resting Heart Rate
-      deepSleepHours: null,
-      totalSleepHours: null,
+      rhr: null, // Resting Heart Rate (bpm)
+      deepSleepHours: null, // Horas sueño profundo
+      totalSleepHours: null, // Horas sueño total
+      spo2: null, // % Saturación oxígeno
+      stressLevel: null, // Puntuación de estrés (1-100)
       weightKg: null,
       symptoms: [],
+      symptomsSavedAt: null, // Fecha y hora oficial de guardado
       weather: {
         temp: null,
         humidity: null,
         pressureHpa: null,
+        pressureDelta: 0,
         pressureAlert: false,
         lastUpdated: null
       },
@@ -173,7 +177,7 @@ class StateStore {
     this.updateToday({ battery });
   }
 
-  // Symptoms Toggle
+  // Symptoms Toggle & Official Save
   toggleSymptom(symptomId) {
     const symptoms = new Set(this.today.symptoms || []);
     if (symptoms.has(symptomId)) {
@@ -186,6 +190,16 @@ class StateStore {
 
   clearSymptoms() {
     this.updateToday({ symptoms: [] });
+  }
+
+  saveSymptomsOfficial() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const fullTimestamp = `${this.today.date} ${timeString}`;
+    this.updateToday({ symptomsSavedAt: fullTimestamp });
+    this.saveCurrentDayToHistory();
+    this.emit('symptoms:saved', { timestamp: fullTimestamp, count: (this.today.symptoms || []).length });
+    return fullTimestamp;
   }
 
   // History Archiving

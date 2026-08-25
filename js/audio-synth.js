@@ -1,12 +1,15 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * AUDIO SYNTHESIZER - WEB AUDIO API TACTICAL ALARM & PULSE SOUNDS
+ * AUDIO SYNTHESIZER - WEB AUDIO API HIGH-POWER MEDICAL SIREN & SOUNDS
  */
 
 class AudioSynthesizer {
   constructor() {
     this.audioCtx = null;
-    this.alarmInterval = null;
+    this.alarmOsc1 = null;
+    this.alarmOsc2 = null;
+    this.alarmGain = null;
+    this.alarmLfo = null;
     this.isPlayingAlarm = false;
   }
 
@@ -75,45 +78,77 @@ class AudioSynthesizer {
     }
   }
 
-  // Medical Alert Siren (High-Pitch Dual Tone Pulse for Bystanders)
+  // Continuous High-Power Medical Siren (Dual Tone Warble to Cut Through Street Noise)
   startMedicalAlarm() {
     if (this.isPlayingAlarm) return;
-    this.isPlayingAlarm = true;
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
 
-    const playBeep = () => {
-      try {
-        const ctx = this.getAudioContext();
-        if (!ctx || !this.isPlayingAlarm) return;
+      this.isPlayingAlarm = true;
 
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+      // Master Gain for High Output
+      this.alarmGain = ctx.createGain();
+      this.alarmGain.gain.setValueAtTime(0.35, ctx.currentTime);
+      this.alarmGain.connect(ctx.destination);
 
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(950, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(1400, ctx.currentTime + 0.25);
+      // Main Ambulance / Paramedic Dual Oscillators
+      this.alarmOsc1 = ctx.createOscillator();
+      this.alarmOsc1.type = 'sawtooth';
 
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.28);
+      this.alarmOsc2 = ctx.createOscillator();
+      this.alarmOsc2.type = 'square';
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+      // LFO (Low Frequency Oscillator) to modulate frequency between 650 Hz and 1250 Hz
+      this.alarmLfo = ctx.createOscillator();
+      this.alarmLfo.type = 'sawtooth';
+      this.alarmLfo.frequency.setValueAtTime(2.2, ctx.currentTime); // 2.2 Hz warble rate
 
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.28);
-      } catch (e) {
-        console.warn('Alarm tone error:', e);
-      }
-    };
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(320, ctx.currentTime); // Depth +/- 320 Hz
 
-    playBeep();
-    this.alarmInterval = setInterval(playBeep, 450);
+      this.alarmOsc1.frequency.setValueAtTime(950, ctx.currentTime);
+      this.alarmOsc2.frequency.setValueAtTime(954, ctx.currentTime); // Detuned for piercing acoustic beating
+
+      this.alarmLfo.connect(lfoGain);
+      lfoGain.connect(this.alarmOsc1.frequency);
+      lfoGain.connect(this.alarmOsc2.frequency);
+
+      this.alarmOsc1.connect(this.alarmGain);
+      this.alarmOsc2.connect(this.alarmGain);
+
+      this.alarmOsc1.start();
+      this.alarmOsc2.start();
+      this.alarmLfo.start();
+    } catch (e) {
+      console.warn('Continuous alarm failed to start:', e);
+    }
   }
 
   stopMedicalAlarm() {
     this.isPlayingAlarm = false;
-    if (this.alarmInterval) {
-      clearInterval(this.alarmInterval);
-      this.alarmInterval = null;
+    try {
+      if (this.alarmOsc1) {
+        this.alarmOsc1.stop();
+        this.alarmOsc1.disconnect();
+        this.alarmOsc1 = null;
+      }
+      if (this.alarmOsc2) {
+        this.alarmOsc2.stop();
+        this.alarmOsc2.disconnect();
+        this.alarmOsc2 = null;
+      }
+      if (this.alarmLfo) {
+        this.alarmLfo.stop();
+        this.alarmLfo.disconnect();
+        this.alarmLfo = null;
+      }
+      if (this.alarmGain) {
+        this.alarmGain.disconnect();
+        this.alarmGain = null;
+      }
+    } catch (e) {
+      console.warn('Alarm stop error:', e);
     }
   }
 
