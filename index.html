@@ -822,6 +822,32 @@
               ¿Ya tienes cuenta? <strong style="color: var(--f1-green);">Inicia sesión aquí</strong>
             </button>
           </div>
+
+          <!-- FIREBASE CREDENTIALS QUICK SETUP ACCORDION -->
+          <div style="border-top: 1px solid var(--border-tactical); padding-top: 12px; margin-top: 6px;">
+            <div id="firebase-config-status-notice" style="font-size: 0.8rem; margin-bottom: 8px; line-height: 1.4;"></div>
+            
+            <button id="btn-toggle-firebase-config" type="button" class="btn-secondary-tactical" style="font-size: 0.82rem; min-height: 38px; color: var(--f1-cyan); border-color: rgba(6,182,212,0.4);">
+              ⚙️ Pegar / Configurar Credenciales de Firebase
+            </button>
+
+            <div id="firebase-config-setup-box" class="hidden" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-tactical);">
+              <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+                Copia y pega aquí tu objeto <code style="color: var(--f1-green);">firebaseConfig</code> (de tu consola gratuita en <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color: var(--f1-cyan);">console.firebase.google.com</a>):
+              </div>
+
+              <textarea id="firebase-config-textarea" rows="5" class="input-tactical" style="font-family: monospace; font-size: 0.75rem; resize: vertical;" placeholder='const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "tu-app.firebaseapp.com",
+  projectId: "tu-app",
+  appId: "1:..."
+};'></textarea>
+
+              <button id="btn-save-firebase-config" type="button" class="btn-primary-tactical" style="background: var(--f1-green); color: #000; font-size: 0.85rem; font-weight: bold; min-height: 42px;">
+                💾 Guardar Credenciales y Conectar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

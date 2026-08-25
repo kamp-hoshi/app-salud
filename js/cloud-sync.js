@@ -7,8 +7,9 @@
 import { store } from './state.js';
 import { soundFx } from './audio-synth.js';
 
-// Default Firebase Configuration (Can be customized by user in Settings or environment)
-const DEFAULT_FIREBASE_CONFIG = {
+// Default Firebase Configuration
+// If you have your Firebase Project config, you can paste it here or in the app's Settings panel:
+export const DEFAULT_FIREBASE_CONFIG = {
   apiKey: "",
   authDomain: "",
   projectId: "",
@@ -31,7 +32,7 @@ export class CloudSyncManager {
     this.headerUserBtn = document.getElementById('header-user-badge-btn');
     this.headerUserDot = document.getElementById('header-user-sync-dot');
     this.headerUserText = document.getElementById('header-user-name');
-    
+
     this.authModal = document.getElementById('auth-modal');
     this.btnCloseAuth = document.getElementById('btn-close-auth-modal');
     this.btnGoogleLogin = document.getElementById('btn-google-signin');
@@ -46,11 +47,18 @@ export class CloudSyncManager {
     this.btnLogout = document.getElementById('btn-auth-logout');
     this.btnManualSync = document.getElementById('btn-manual-sync-now');
     this.syncStatusText = document.getElementById('auth-sync-status-text');
+
+    // Config setup elements
+    this.btnToggleConfigBox = document.getElementById('btn-toggle-firebase-config');
+    this.configSetupBox = document.getElementById('firebase-config-setup-box');
+    this.configTextarea = document.getElementById('firebase-config-textarea');
+    this.btnSaveConfig = document.getElementById('btn-save-firebase-config');
+    this.configStatusNotice = document.getElementById('firebase-config-status-notice');
   }
 
   async init() {
     this.bindEvents();
-    this.initFirebase();
+    await this.initFirebase();
     this.setupOnlineListeners();
   }
 
@@ -59,7 +67,10 @@ export class CloudSyncManager {
     try {
       const custom = localStorage.getItem('pitcrew_firebase_config_v4');
       if (custom) {
-        return JSON.parse(custom);
+        const parsed = JSON.parse(custom);
+        if (parsed && parsed.apiKey && parsed.projectId) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.warn('Could not parse custom firebase config:', e);
@@ -67,31 +78,87 @@ export class CloudSyncManager {
     return DEFAULT_FIREBASE_CONFIG;
   }
 
+  // Parse raw text or JS code pasted by user
+  parseFirebaseConfigText(rawText) {
+    if (!rawText) return null;
+    let text = rawText.trim();
+
+    // If pasted as JS object `const firebaseConfig = { ... };`
+    const objectMatch = text.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      text = objectMatch[0];
+    }
+
+    try {
+      // First try JSON.parse
+      return JSON.parse(text);
+    } catch (e) {
+      // Fallback: extract properties using regex
+      const extract = (key) => {
+        const match = text.match(new RegExp(`(?:["']?${key}["']?\\s*:\\s*["']([^"']+)["'])`, 'i'));
+        return match ? match[1] : '';
+      };
+
+      const apiKey = extract('apiKey');
+      const authDomain = extract('authDomain');
+      const projectId = extract('projectId');
+      const storageBucket = extract('storageBucket');
+      const messagingSenderId = extract('messagingSenderId');
+      const appId = extract('appId');
+
+      if (apiKey && projectId) {
+        return { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
+      }
+    }
+    return null;
+  }
+
   saveFirebaseConfig(cfg) {
     try {
       localStorage.setItem('pitcrew_firebase_config_v4', JSON.stringify(cfg));
+      soundFx.playHydrationSound();
       this.initFirebase();
+      return true;
     } catch (e) {
       console.error('Error saving firebase config:', e);
+      return false;
     }
   }
 
   async initFirebase() {
     const config = this.getFirebaseConfig();
-    if (!config || !config.apiKey || !config.projectId) {
+    const hasConfig = Boolean(config && config.apiKey && config.projectId);
+
+    if (this.configStatusNotice) {
+      if (hasConfig) {
+        this.configStatusNotice.innerHTML = `
+          <span style="color: var(--f1-green); font-weight: bold;">🟢 Proyecto Conectado:</span> 
+          <strong style="color: var(--text-pure);">${config.projectId}</strong>
+        `;
+      } else {
+        this.configStatusNotice.innerHTML = `
+          <span style="color: var(--f1-amber); font-weight: bold;">🟡 Estado:</span> 
+          <span>Modo Local (Pega las credenciales de tu proyecto para activar la nube)</span>
+        `;
+      }
+    }
+
+    if (!hasConfig) {
       this.updateUIForLoggedOut();
       return;
     }
 
     try {
       // Dynamic import of Firebase SDK v10 (ESM CDN)
-      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
       const { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
       const { getFirestore, doc, setDoc, getDoc, collection, getDocs, enableIndexedDbPersistence } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
-      this.firebaseApp = initializeApp(config);
+      const existingApps = getApps();
+      this.firebaseApp = existingApps.length > 0 ? getApp() : initializeApp(config);
       this.auth = getAuth(this.firebaseApp);
       this.db = getFirestore(this.firebaseApp);
+
       this.firebaseSDK = {
         GoogleAuthProvider,
         signInWithPopup,
@@ -106,14 +173,12 @@ export class CloudSyncManager {
         getDocs
       };
 
-      // Try enabling offline persistence in Firestore
+      // Enable offline persistence in Firestore
       try {
         await enableIndexedDbPersistence(this.db);
       } catch (err) {
-        if (err.code === 'failed-precondition') {
-          console.warn('Firestore persistence failed: Multiple tabs open');
-        } else if (err.code === 'unimplemented') {
-          console.warn('Firestore persistence not supported in this browser');
+        if (err.code !== 'failed-precondition') {
+          console.warn('Firestore persistence notice:', err.message);
         }
       }
 
@@ -130,7 +195,7 @@ export class CloudSyncManager {
       });
 
     } catch (err) {
-      console.warn('Firebase initialization notice (running in local-first mode):', err);
+      console.warn('Firebase initialization notice (running in local mode):', err);
       this.updateUIForLoggedOut();
     }
   }
@@ -180,6 +245,39 @@ export class CloudSyncManager {
     if (this.btnCloseAuth) {
       this.btnCloseAuth.addEventListener('click', () => {
         this.closeAuthModal();
+      });
+    }
+
+    // Toggle Config Paste Box
+    if (this.btnToggleConfigBox && this.configSetupBox) {
+      this.btnToggleConfigBox.addEventListener('click', () => {
+        soundFx.playTactileClick();
+        this.configSetupBox.classList.toggle('hidden');
+        if (!this.configSetupBox.classList.contains('hidden')) {
+          const cfg = this.getFirebaseConfig();
+          if (this.configTextarea && cfg && cfg.apiKey) {
+            this.configTextarea.value = JSON.stringify(cfg, null, 2);
+          }
+        }
+      });
+    }
+
+    // Save Config Button
+    if (this.btnSaveConfig && this.configTextarea) {
+      this.btnSaveConfig.addEventListener('click', () => {
+        const raw = this.configTextarea.value;
+        const parsed = this.parseFirebaseConfigText(raw);
+        if (!parsed || !parsed.apiKey || !parsed.projectId) {
+          alert('No se pudo reconocer la configuración. Asegúrate de copiar el objeto con apiKey y projectId.');
+          return;
+        }
+
+        const saved = this.saveFirebaseConfig(parsed);
+        if (saved) {
+          alert(`✅ ¡Credenciales guardadas con éxito para el proyecto: ${parsed.projectId}! Ya puedes iniciar sesión.`);
+          if (this.configSetupBox) this.configSetupBox.classList.add('hidden');
+          this.clearAuthError();
+        }
       });
     }
 
@@ -256,7 +354,6 @@ export class CloudSyncManager {
   setAuthMode(mode) {
     const title = document.getElementById('auth-modal-title');
     const submitBtn = document.getElementById('btn-email-submit');
-    const switchRow = document.getElementById('auth-switch-row');
     const nameGroup = document.getElementById('auth-name-group');
 
     this.clearAuthError();
@@ -280,7 +377,7 @@ export class CloudSyncManager {
 
   showAuthError(msg) {
     if (this.authErrorBanner) {
-      this.authErrorBanner.textContent = msg;
+      this.authErrorBanner.innerHTML = msg;
       this.authErrorBanner.classList.remove('hidden');
     }
   }
@@ -293,8 +390,15 @@ export class CloudSyncManager {
   }
 
   async signInWithGoogle() {
-    if (!this.auth || !this.firebaseSDK) {
-      this.showAuthError('Servicio de nube no configurado. Ingresa tus credenciales en Ajustes.');
+    const config = this.getFirebaseConfig();
+    if (!this.auth || !this.firebaseSDK || !config.apiKey) {
+      this.showAuthError(`
+        <div>⚠️ Servicio de nube no configurado aún.</div>
+        <div style="font-size: 0.78rem; font-weight: normal; margin-top: 4px;">
+          Toca en <strong>"⚙️ Configurar Credenciales de Firebase"</strong> abajo para pegar las claves de tu proyecto gratuito.
+        </div>
+      `);
+      if (this.configSetupBox) this.configSetupBox.classList.remove('hidden');
       return;
     }
 
@@ -311,8 +415,15 @@ export class CloudSyncManager {
   }
 
   async handleEmailAuth() {
-    if (!this.auth || !this.firebaseSDK) {
-      this.showAuthError('Servicio de nube no configurado. Ingresa tus credenciales en Ajustes.');
+    const config = this.getFirebaseConfig();
+    if (!this.auth || !this.firebaseSDK || !config.apiKey) {
+      this.showAuthError(`
+        <div>⚠️ Servicio de nube no configurado aún.</div>
+        <div style="font-size: 0.78rem; font-weight: normal; margin-top: 4px;">
+          Toca en <strong>"⚙️ Configurar Credenciales de Firebase"</strong> abajo para pegar las claves de tu proyecto gratuito.
+        </div>
+      `);
+      if (this.configSetupBox) this.configSetupBox.classList.remove('hidden');
       return;
     }
 
@@ -334,7 +445,6 @@ export class CloudSyncManager {
       if (this.authMode === 'REGISTER') {
         const cred = await this.firebaseSDK.createUserWithEmailAndPassword(this.auth, email, password);
         if (displayName && cred.user) {
-          // Update profile local
           store.updateProfile({ userName: displayName });
         }
       } else {
@@ -396,11 +506,9 @@ export class CloudSyncManager {
 
       if (profileSnap.exists()) {
         const cloudProfile = profileSnap.data();
-        // Merge cloud profile with local profile
         store.profile = { ...store.profile, ...cloudProfile, isOnboarded: true };
         store.save('pitcrew_profile_v4', store.profile);
       } else {
-        // First time cloud upload
         await setDoc(profileDocRef, store.profile, { merge: true });
       }
 
@@ -411,7 +519,6 @@ export class CloudSyncManager {
 
       if (todaySnap.exists()) {
         const cloudToday = todaySnap.data();
-        // Merge preferring most recent local updates
         const mergedToday = { ...cloudToday, ...store.today };
         store.today = mergedToday;
         store.save('pitcrew_today_v4', mergedToday);
@@ -486,6 +593,8 @@ export class CloudSyncManager {
         return 'La contraseña debe tener al menos 6 caracteres.';
       case 'auth/popup-closed-by-user':
         return 'Se cerró la ventana de Google antes de finalizar.';
+      case 'auth/unauthorized-domain':
+        return 'Dominio no autorizado. En Firebase Console > Authentication > Settings > Authorized domains, agrega tu dominio.';
       default:
         return `Error de acceso: ${code}`;
     }
