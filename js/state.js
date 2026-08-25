@@ -1,6 +1,6 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * STATE MANAGEMENT - LOCAL-FIRST REACTIVE STORE (EXTENDED TELEMETRY)
+ * STATE MANAGEMENT - LOCAL-FIRST REACTIVE STORE WITH BASELINE CALIBRATION
  */
 
 const STORAGE_KEYS = {
@@ -16,6 +16,11 @@ class StateStore {
     this.profile = this.load(STORAGE_KEYS.PROFILE, {
       isOnboarded: false,
       diagnosis: 'POTS',
+      weightKg: 62,
+      heightCm: 165,
+      workRoutine: 'sitting', // 'standing' | 'sitting' | 'mixed'
+      orthostaticTolerance: '10-15min', // '<5min' | '10-15min' | '>30min'
+      baselineChronicSymptoms: ['vasc_frio'], // Síntomas habituales de base
       hydrationTargetMl: 3000,
       sodiumTargetG: '5g (Suero)',
       medicationType: 'Tratamiento natural / Suplementos',
@@ -60,10 +65,9 @@ class StateStore {
       electrolytesLogged: false,
       rhr: null, // Resting Heart Rate (bpm)
       deepSleepHours: null, // Horas sueño profundo
-      totalSleepHours: null, // Horas sueño total
-      spo2: null, // % Saturación oxígeno
-      stressLevel: null, // Puntuación de estrés (1-100)
-      weightKg: null,
+      totalSleepHours: null, // Horas sueño total (ej. 6.1 h)
+      spo2: null, // % Saturación oxígeno (ej. 95%)
+      stressLevel: null, // Puntuación de estrés (1-100, ej. 32)
       symptoms: [],
       symptomsSavedAt: null, // Fecha y hora oficial de guardado
       weather: {

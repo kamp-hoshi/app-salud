@@ -1,23 +1,51 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * MODULE 1: ONBOARDING & CHASSIS CALIBRATION (100% LOCAL, ZERO API KEYS)
+ * MODULE 1: ONBOARDING & BASELINE CALIBRATION (LÍNEA BASE Y CONTEXTO)
  */
 
 import { store } from './state.js';
 import { soundFx } from './audio-synth.js';
+import { SYMPTOMS_CATALOG } from './symptoms.js';
 
 export class OnboardingManager {
   constructor() {
     this.modal = document.getElementById('onboarding-modal');
     this.form = document.getElementById('onboarding-form');
+    this.baselineChronicContainer = document.getElementById('onboard-chronic-symptoms-container');
+    this.settingsChronicContainer = document.getElementById('settings-chronic-symptoms-container');
   }
 
   init() {
+    this.renderChronicCheckboxes();
     if (!store.profile.isOnboarded) {
       this.showOnboarding();
     }
     this.bindEvents();
     this.renderSettings();
+  }
+
+  renderChronicCheckboxes() {
+    const renderList = (container, prefix) => {
+      if (!container) return;
+      let html = '';
+      const activeBaselines = new Set(store.profile.baselineChronicSymptoms || []);
+
+      SYMPTOMS_CATALOG.forEach(cat => {
+        cat.items.forEach(item => {
+          const isChecked = activeBaselines.has(item.id);
+          html += `
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-primary); cursor: pointer; padding: 4px 0;">
+              <input type="checkbox" name="${prefix}_chronic" value="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--f1-green);">
+              <span>${item.label}</span>
+            </label>
+          `;
+        });
+      });
+      container.innerHTML = html;
+    };
+
+    renderList(this.baselineChronicContainer, 'onboard');
+    renderList(this.settingsChronicContainer, 'settings');
   }
 
   showOnboarding() {
@@ -88,17 +116,26 @@ export class OnboardingManager {
     const medTypeSelect = document.getElementById('onboard-medtype-select');
     const medNotesInput = document.getElementById('onboard-mednotes-input');
 
+    // Baseline fields
+    const weightInput = document.getElementById('onboard-weight-input');
+    const heightInput = document.getElementById('onboard-height-input');
+    const routineSelect = document.getElementById('onboard-routine-select');
+    const toleranceSelect = document.getElementById('onboard-tolerance-select');
+
     const c1Name = document.getElementById('onboard-c1-name');
     const c1Phone = document.getElementById('onboard-c1-phone');
-    const c2Name = document.getElementById('onboard-c2-name');
-    const c2Phone = document.getElementById('onboard-c2-phone');
-    const c3Name = document.getElementById('onboard-c3-name');
-    const c3Phone = document.getElementById('onboard-c3-phone');
 
     const selectedTriggers = [];
     document.querySelectorAll('.onboarding-trigger-chip.active').forEach(chip => {
       selectedTriggers.push(chip.dataset.val);
     });
+
+    const selectedChronicSymptoms = [];
+    if (this.baselineChronicContainer) {
+      this.baselineChronicContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+        selectedChronicSymptoms.push(cb.value);
+      });
+    }
 
     const contacts = [];
     if (c1Name && c1Phone && c1Phone.value.trim()) {
@@ -106,20 +143,6 @@ export class OnboardingManager {
         name: c1Name.value.trim() || 'Contacto Principal',
         phone: c1Phone.value.trim(),
         relation: 'Principal'
-      });
-    }
-    if (c2Name && c2Phone && c2Phone.value.trim()) {
-      contacts.push({
-        name: c2Name.value.trim() || 'Contacto 2',
-        phone: c2Phone.value.trim(),
-        relation: 'Apoyo'
-      });
-    }
-    if (c3Name && c3Phone && c3Phone.value.trim()) {
-      contacts.push({
-        name: c3Name.value.trim() || 'Contacto 3',
-        phone: c3Phone.value.trim(),
-        relation: 'Médico / Otro'
       });
     }
 
@@ -134,6 +157,11 @@ export class OnboardingManager {
     store.updateProfile({
       isOnboarded: true,
       diagnosis: diagInput ? diagInput.value : 'POTS',
+      weightKg: weightInput ? parseFloat(weightInput.value) || 60 : 60,
+      heightCm: heightInput ? parseInt(heightInput.value, 10) || 165 : 165,
+      workRoutine: routineSelect ? routineSelect.value : 'sitting',
+      orthostaticTolerance: toleranceSelect ? toleranceSelect.value : '10-15min',
+      baselineChronicSymptoms: selectedChronicSymptoms,
       hydrationTargetMl: waterInput ? parseInt(waterInput.value, 10) || 3000 : 3000,
       sodiumTargetG: sodiumSelect ? sodiumSelect.value : '5g (Suero)',
       medicationType: medTypeSelect ? medTypeSelect.value : 'Tratamiento natural / Suplementos',
@@ -154,12 +182,25 @@ export class OnboardingManager {
     const medTypeSelect = document.getElementById('settings-medtype');
     const medNotesInput = document.getElementById('settings-mednotes');
 
+    // Baseline fields in settings
+    const weightInput = document.getElementById('settings-weight');
+    const heightInput = document.getElementById('settings-height');
+    const routineSelect = document.getElementById('settings-routine');
+    const toleranceSelect = document.getElementById('settings-tolerance');
+
     const c1Name = document.getElementById('settings-c1-name');
     const c1Phone = document.getElementById('settings-c1-phone');
     const c2Name = document.getElementById('settings-c2-name');
     const c2Phone = document.getElementById('settings-c2-phone');
     const c3Name = document.getElementById('settings-c3-name');
     const c3Phone = document.getElementById('settings-c3-phone');
+
+    const selectedChronicSymptoms = [];
+    if (this.settingsChronicContainer) {
+      this.settingsChronicContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+        selectedChronicSymptoms.push(cb.value);
+      });
+    }
 
     const contacts = [];
     if (c1Name && c1Phone && c1Phone.value.trim()) {
@@ -174,6 +215,11 @@ export class OnboardingManager {
 
     store.updateProfile({
       diagnosis: diagInput ? diagInput.value : store.profile.diagnosis,
+      weightKg: weightInput ? parseFloat(weightInput.value) || 60 : store.profile.weightKg,
+      heightCm: heightInput ? parseInt(heightInput.value, 10) || 165 : store.profile.heightCm,
+      workRoutine: routineSelect ? routineSelect.value : store.profile.workRoutine,
+      orthostaticTolerance: toleranceSelect ? toleranceSelect.value : store.profile.orthostaticTolerance,
+      baselineChronicSymptoms: selectedChronicSymptoms,
       hydrationTargetMl: waterInput ? parseInt(waterInput.value, 10) || 3000 : 3000,
       sodiumTargetG: sodiumSelect ? sodiumSelect.value : '5g (Suero)',
       medicationType: medTypeSelect ? medTypeSelect.value : 'Tratamiento natural / Suplementos',
@@ -181,10 +227,11 @@ export class OnboardingManager {
       contacts: contacts.length ? contacts : store.profile.contacts
     });
 
+    soundFx.playHydrationSound();
     const statusBanner = document.getElementById('settings-saved-banner');
     if (statusBanner) {
       statusBanner.classList.remove('hidden');
-      setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+      setTimeout(() => statusBanner.classList.add('hidden'), 3500);
     }
   }
 
@@ -192,10 +239,14 @@ export class OnboardingManager {
     const p = store.profile;
     const setVal = (id, val) => {
       const el = document.getElementById(id);
-      if (el) el.value = val || '';
+      if (el) el.value = val !== undefined && val !== null ? val : '';
     };
 
     setVal('settings-diagnosis', p.diagnosis);
+    setVal('settings-weight', p.weightKg || 60);
+    setVal('settings-height', p.heightCm || 165);
+    setVal('settings-routine', p.workRoutine || 'sitting');
+    setVal('settings-tolerance', p.orthostaticTolerance || '10-15min');
     setVal('settings-water-target', p.hydrationTargetMl);
     setVal('settings-sodium-target', p.sodiumTargetG);
     setVal('settings-medtype', p.medicationType);
@@ -213,5 +264,7 @@ export class OnboardingManager {
       setVal('settings-c3-name', p.contacts[2].name);
       setVal('settings-c3-phone', p.contacts[2].phone);
     }
+
+    this.renderChronicCheckboxes();
   }
 }

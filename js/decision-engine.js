@@ -1,7 +1,7 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * MODULE 4: TACTICAL DAILY HEALTH DASHBOARD & PACING ENGINE
- * REAL-TIME SUMMARY OF TODAY'S VITALS, F1 SEMAPHORE, SYMPTOMS & DIRECTIVES
+ * MODULE 4: TACTICAL DAILY HEALTH DASHBOARD & BASELINE-AWARE PACING ENGINE
+ * DIFFERENTIATES CHRONIC BASELINE SYMPTOMS FROM ACUTE FLARES TO PREVENT FALSE ALARMS
  */
 
 import { store } from './state.js';
@@ -42,79 +42,108 @@ export class DecisionEngine {
 
   evaluateState() {
     const t = store.today;
+    const p = store.profile;
     const battery = t.battery || 70;
-    const symptoms = t.symptoms || [];
-    const symptomCount = symptoms.length;
+    const allSymptoms = t.symptoms || [];
+    const baselineSet = new Set(p.baselineChronicSymptoms || []);
+
+    // 1. Separate Acute (New) Symptoms from Chronic (Habitual) Baseline Symptoms
+    const acuteSymptoms = allSymptoms.filter(s => !baselineSet.has(s));
+    const chronicReported = allSymptoms.filter(s => baselineSet.has(s));
+
+    const acuteCount = acuteSymptoms.length;
+    const totalCount = allSymptoms.length;
     const weatherAlert = t.weather && t.weather.pressureAlert;
-    const hasCriticalSymptom = symptoms.includes('chassis_horizontal') || symptoms.includes('vasc_mareo');
+
+    // Routine normalization
+    const isStandingWork = p.workRoutine === 'standing';
+    const isSittingWork = p.workRoutine === 'sitting';
 
     const reasons = [];
 
-    // Check battery
+    // Check battery level
     if (battery < 40) {
-      reasons.push(`Batería percibida en nivel crítico (${battery}%)`);
+      reasons.push(`Batería percibida crítica (${battery}%)`);
     } else if (battery <= 70) {
       reasons.push(`Batería percibida moderada (${battery}%)`);
     }
 
-    // Check symptoms
-    if (symptoms.includes('chassis_horizontal')) {
+    // Critical acute flags
+    if (allSymptoms.includes('chassis_horizontal')) {
       reasons.push('Necesidad urgente de posición horizontal reportada');
     }
-    if (symptoms.includes('vasc_mareo')) {
-      reasons.push('Mareo o visión borrosa al pararse');
+    if (acuteSymptoms.includes('vasc_mareo')) {
+      reasons.push('Mareo ortostático agudo no habitual detectado');
     }
-    if (symptoms.includes('vasc_taquicardia')) {
-      reasons.push('Taquicardia postural activa');
-    }
-    if (symptomCount >= 5) {
-      reasons.push(`Sobrecarga sintomática alta (${symptomCount} síntomas activos)`);
-    } else if (symptomCount >= 2) {
-      reasons.push(`${symptomCount} síntomas reportados`);
+    if (acuteSymptoms.includes('vasc_taquicardia')) {
+      reasons.push('Taquicardia postural aguda activa');
     }
 
-    // Check weather
+    // Acute symptom burden vs chronic baseline
+    if (acuteCount >= 3) {
+      reasons.push(`Alerta de brote: ${acuteCount} síntomas nuevos/agudos`);
+    } else if (acuteCount > 0) {
+      reasons.push(`${acuteCount} síntoma(s) agudo(s) reportado(s)`);
+    }
+
+    if (chronicReported.length > 0) {
+      reasons.push(`${chronicReported.length} síntoma(s) habitual(es) de línea base (normalizados sin penalización)`);
+    }
+
+    // Work routine context notes
+    if (isStandingWork && allSymptoms.includes('vasc_pesadez')) {
+      reasons.push('Pesadez de piernas contextualizada por rutina de pie');
+    }
+    if (isSittingWork && allSymptoms.includes('chassis_ocular')) {
+      reasons.push('Fatiga visual contextualizada por trabajo en pantallas');
+    }
+
+    // Check weather & biometrics
     if (weatherAlert) {
       reasons.push(`Caída barométrica detectada (Δ ${t.weather.pressureDelta || -3} hPa)`);
     }
-
-    // Check stress & sleep
     if (t.stressLevel && t.stressLevel > 70) {
-      reasons.push(`Estrés elevado (${t.stressLevel}/100)`);
+      reasons.push(`Estrés elevado detectado (${t.stressLevel}/100)`);
     }
-    if (t.deepSleepHours !== null && t.deepSleepHours < 1.0) {
-      reasons.push(`Sueño profundo reducido (${t.deepSleepHours}h)`);
+    if (t.spo2 && t.spo2 < 94) {
+      reasons.push(`Saturación SpO2 baja (${t.spo2}%)`);
     }
 
-    // RED
-    if (battery < 40 || symptomCount >= 5 || symptoms.includes('chassis_horizontal')) {
+    // RED CRITERIA (Strict physiological safety)
+    if (battery < 40 || allSymptoms.includes('chassis_horizontal') || acuteCount >= 4) {
       return {
         status: 'RED',
         title: '🔴 MODO BÚNKER (Reposo Táctico Obligatorio)',
-        reasons: reasons.length ? reasons : ['Déficit autonómico o fatiga severa detectada'],
-        directive: 'La reserva fisiológica de tu chasis está agotada. Queda prohibida la exigencia ortostática, social o de productividad. El descanso horizontal es una necesidad fisiológica para restaurar la perfusión cerebral.',
-        isBunker: true
+        reasons: reasons.length ? reasons : ['Déficit hemodinámico o fatiga severa detectada'],
+        directive: 'La reserva fisiológica de tu chasis está agotada. Queda suspendida la exigencia ortostática y social. El descanso horizontal es una maniobra médica para oxigenar tu cerebro y restaurar el tono vascular.',
+        isBunker: true,
+        acuteCount,
+        chronicCount: chronicReported.length
       };
     }
 
-    // AMBER
-    if (battery <= 70 || symptomCount >= 2 || weatherAlert || (t.stressLevel && t.stressLevel > 60)) {
+    // AMBER CRITERIA (Safety Car Pacing)
+    if (battery <= 70 || acuteCount >= 1 || weatherAlert || (t.stressLevel && t.stressLevel > 60)) {
       return {
         status: 'AMBER',
         title: '🟡 SAFETY CAR (Precaución y Pacing Táctico)',
         reasons: reasons.length ? reasons : ['Reserva intermedia de energía', 'Prevención de crisis'],
-        directive: 'Velocidad reducida. Intercala 20 minutos de tareas de baja demanda con pausas de descanso en posición sentada o pies elevados. Realiza las Misiones Cinéticas a Ras de Suelo y refuerza hidratación salina.',
-        isSafetyCar: true
+        directive: 'Velocidad reducida. Intercala 20 minutos de tareas de baja demanda con pausas de descanso en posición sentada o con pies elevados. Realiza las Misiones Cinéticas a Ras de Suelo y refuerza suero.',
+        isSafetyCar: true,
+        acuteCount,
+        chronicCount: chronicReported.length
       };
     }
 
-    // GREEN
+    // GREEN CRITERIA (Track Clear)
     return {
       status: 'GREEN',
       title: '🟢 PISTA LIBRE (Energía y Chasis Estable)',
-      reasons: reasons.length ? reasons : ['Batería > 70%', 'Biometría en rango óptimo'],
-      directive: 'Condición favorable para avanzar en proyectos con foco. Aplica pacing preventivo: hidrátate constantemente y evita estar de pie inmóvil más de 30 minutos.',
-      isGreen: true
+      reasons: reasons.length ? reasons : ['Batería > 70%', 'Sin síntomas agudos descompensantes'],
+      directive: 'Condición favorable para avanzar en proyectos con foco. Aplica pacing preventivo: hidrátate constantemente y no permanezcas de pie inmóvil más de 30 minutos.',
+      isGreen: true,
+      acuteCount: 0,
+      chronicCount: chronicReported.length
     };
   }
 
@@ -163,7 +192,6 @@ export class DecisionEngine {
       btn.classList.toggle('active', parseInt(btn.dataset.val, 10) === battery);
     });
 
-    // Render Semaphore on Dashboard and Home
     this.renderSemaphoreUI(evaluation);
     this.renderTacticalDashboard(evaluation);
   }
@@ -189,7 +217,7 @@ export class DecisionEngine {
 
       <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 12px; margin-top: 4px;">
         <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">
-          🔍 Por qué este estado:
+          🔍 Contexto de Línea Base:
         </div>
         <ul style="padding-left: 18px; font-size: 0.8rem; color: var(--text-primary); line-height: 1.4;">
           ${ev.reasons.map(r => `<li>${r}</li>`).join('')}
@@ -205,7 +233,7 @@ export class DecisionEngine {
             <li><strong>Piernas a 45° en pared:</strong> 10 a 15 min de retorno venoso pasivo hacia el cerebro.</li>
             <li><strong>Movilidad en suelo:</strong> Estiramientos suaves de gemelos y cuádriceps en colchoneta.</li>
             <li><strong>Bomba Muscular Salina:</strong> Beber 350-500 ml de agua con sal/electrolitos.</li>
-            <li><strong>Preservación Cognitiva:</strong> Posponer reuniones o llamadas agotadoras.</li>
+            <li><strong>Preservación Cognitiva:</strong> Posponer reuniones o llamadas complejas.</li>
           </ul>
         </div>
       ` : ''}
@@ -260,17 +288,26 @@ export class DecisionEngine {
     const t = store.today;
     const p = store.profile;
     const hydrationPct = Math.round(((t.hydrationMl || 0) / (p.hydrationTargetMl || 3000)) * 100);
+    const baselineSet = new Set(p.baselineChronicSymptoms || []);
 
-    // Get Active Symptoms Names
-    const activeSymptomLabels = [];
+    // Get Active Symptoms Names & Categorization
+    const acuteLabels = [];
+    const baselineLabels = [];
     const activeIds = new Set(t.symptoms || []);
+
     SYMPTOMS_CATALOG.forEach(cat => {
       cat.items.forEach(item => {
         if (activeIds.has(item.id)) {
-          activeSymptomLabels.push(item.label);
+          if (baselineSet.has(item.id)) {
+            baselineLabels.push(item.label);
+          } else {
+            acuteLabels.push(item.label);
+          }
         }
       });
     });
+
+    const sleepHoursDisplay = t.totalSleepHours ? `${t.totalSleepHours} h` : t.deepSleepHours ? `${t.deepSleepHours} h` : null;
 
     container.innerHTML = `
       <!-- 1. SEMAFORO STATUS HEADER -->
@@ -284,7 +321,7 @@ export class DecisionEngine {
         </div>
         <div style="background: var(--bg-card-elevated); padding: 10px 14px; border-radius: 8px; margin-top: 6px;">
           <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">
-            📊 Fundamento Táctico:
+            📊 Fundamento y Calibración de Base:
           </div>
           <ul style="padding-left: 18px; font-size: 0.85rem; color: var(--text-primary); margin-top: 4px; line-height: 1.4;">
             ${ev.reasons.map(r => `<li>${r}</li>`).join('')}
@@ -297,7 +334,7 @@ export class DecisionEngine {
         <div class="card-header-clean">
           <div class="card-title-tactical">
             <span class="icon">📈</span>
-            <span>Telemetría de Hoy (${t.date})</span>
+            <span>Telemetría Mi Fitness & Chasis (${t.date})</span>
           </div>
         </div>
 
@@ -310,37 +347,30 @@ export class DecisionEngine {
           </div>
 
           <div class="metric-card">
-            <div class="metric-label">❤️ Pulso Reposo (RHR)</div>
+            <div class="metric-label">❤️ Pulso (RHR)</div>
             <div class="metric-value">
-              ${t.rhr ? `${t.rhr} <span class="unit">bpm</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">Sin registro</span>'}
+              ${t.rhr ? `${t.rhr} <span class="unit">LPM</span>` : '<span style="font-size: 0.9rem; color: var(--text-muted);">Sin registro</span>'}
             </div>
           </div>
 
           <div class="metric-card">
-            <div class="metric-label">🌙 Sueño Profundo</div>
+            <div class="metric-label">🌙 Sueño</div>
             <div class="metric-value">
-              ${t.deepSleepHours ? `${t.deepSleepHours} <span class="unit">h</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">--</span>'}
-            </div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">🛌 Sueño Total</div>
-            <div class="metric-value">
-              ${t.totalSleepHours ? `${t.totalSleepHours} <span class="unit">h</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">--</span>'}
+              ${sleepHoursDisplay ? `${sleepHoursDisplay}` : '<span style="font-size: 0.9rem; color: var(--text-muted);">--</span>'}
             </div>
           </div>
 
           <div class="metric-card">
             <div class="metric-label">🫁 Oxígeno (SpO2)</div>
             <div class="metric-value">
-              ${t.spo2 ? `${t.spo2} <span class="unit">%</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">--</span>'}
+              ${t.spo2 ? `${t.spo2} <span class="unit">%</span>` : '<span style="font-size: 0.9rem; color: var(--text-muted);">--</span>'}
             </div>
           </div>
 
           <div class="metric-card">
             <div class="metric-label">⚡ Nivel de Estrés</div>
             <div class="metric-value">
-              ${t.stressLevel ? `${t.stressLevel} <span class="unit">/100</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">--</span>'}
+              ${t.stressLevel ? `${t.stressLevel} <span class="unit">/100</span>` : '<span style="font-size: 0.9rem; color: var(--text-muted);">--</span>'}
             </div>
           </div>
 
@@ -352,42 +382,72 @@ export class DecisionEngine {
           </div>
 
           <div class="metric-card">
-            <div class="metric-label">⛅ Presión Atmosférica</div>
+            <div class="metric-label">⛅ Presión Barométrica</div>
             <div class="metric-value" style="font-size: 1.25rem;">
-              ${t.weather && t.weather.pressureHpa ? `${t.weather.pressureHpa} <span class="unit">hPa</span>` : '<span style="font-size: 1rem; color: var(--text-muted);">--</span>'}
+              ${t.weather && t.weather.pressureHpa ? `${t.weather.pressureHpa} <span class="unit">hPa</span>` : '<span style="font-size: 0.9rem; color: var(--text-muted);">--</span>'}
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">👤 Chasis Basal</div>
+            <div class="metric-value" style="font-size: 1.1rem; color: var(--text-secondary);">
+              ${p.weightKg || 60}kg • ${p.heightCm || 165}cm
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 3. SÍNTOMAS MARCADOS HOY -->
+      <!-- 3. SÍNTOMAS AUDITADOS HOY (AGUDOS VS LÍNEA BASE) -->
       <div class="card-tactical">
         <div class="card-header-clean">
           <div class="card-title-tactical">
             <span class="icon">🩺</span>
-            <span>Síntomas Auditados Hoy (${activeSymptomLabels.length})</span>
+            <span>Auditoría de Síntomas (${activeIds.size} activos)</span>
           </div>
           <a href="#symptoms" class="badge badge-green" style="text-decoration: none;">EDITAR</a>
         </div>
 
-        ${activeSymptomLabels.length > 0 ? `
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            ${activeSymptomLabels.map(s => `
-              <span class="badge badge-amber" style="padding: 6px 12px; font-size: 0.82rem; text-transform: none;">
-                ⚠️ ${s}
-              </span>
-            `).join('')}
-          </div>
-          ${t.symptomsSavedAt ? `
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
-              Registrado oficialmente: ${t.symptomsSavedAt}
+        ${acuteLabels.length > 0 ? `
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 0.78rem; font-weight: bold; color: var(--f1-red); text-transform: uppercase; margin-bottom: 4px;">
+              🚨 Síntomas Agudos Nuevos (Impactan Semáforo):
             </div>
-          ` : ''}
-        ` : `
-          <div style="color: var(--f1-green); font-size: 0.88rem; font-weight: bold;">
-            ✔ Cero síntomas críticos activos registrados en este momento.
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              ${acuteLabels.map(s => `
+                <span class="badge badge-red" style="padding: 6px 12px; font-size: 0.82rem; text-transform: none;">
+                  ⚠️ ${s}
+                </span>
+              `).join('')}
+            </div>
           </div>
-        `}
+        ` : ''}
+
+        ${baselineLabels.length > 0 ? `
+          <div style="margin-top: 6px;">
+            <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">
+              🛡️ Síntomas Crónicos de Base (Normalizados):
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              ${baselineLabels.map(s => `
+                <span class="badge badge-amber" style="padding: 5px 10px; font-size: 0.8rem; text-transform: none; opacity: 0.9;">
+                  ✔ ${s}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${activeIds.size === 0 ? `
+          <div style="color: var(--f1-green); font-size: 0.88rem; font-weight: bold;">
+            ✔ Cero síntomas descompensantes activos registrados hoy.
+          </div>
+        ` : ''}
+
+        ${t.symptomsSavedAt ? `
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+            Último registro oficial: ${t.symptomsSavedAt}
+          </div>
+        ` : ''}
       </div>
     `;
   }

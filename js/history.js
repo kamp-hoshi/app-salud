@@ -147,7 +147,7 @@ export class HistoryTelemetryManager {
       const totalSleep = r.totalSleepHours || '';
       const spo2 = r.spo2 || '';
       const stress = r.stressLevel || '';
-      const weight = r.weightKg || '';
+      const weight = r.weightKg || store.profile.weightKg || '';
       const symList = (r.symptoms || []).join('; ');
       const symCount = (r.symptoms || []).length;
       const temp = r.weather && r.weather.temp !== null ? r.weather.temp : '';
@@ -216,7 +216,7 @@ export class HistoryTelemetryManager {
       const totalSleep = r.totalSleepHours || '';
       const spo2 = r.spo2 || '';
       const stress = r.stressLevel || '';
-      const weight = r.weightKg || '';
+      const weight = r.weightKg || store.profile.weightKg || '';
       const symList = (r.symptoms || []).join(';');
       const symCount = (r.symptoms || []).length;
       const temp = r.weather && r.weather.temp !== null ? r.weather.temp : '';

@@ -1,7 +1,7 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * MODULE 2A: LOCAL ON-DEVICE OCR & EXPANDED REGEX PARSER (MI FITNESS / EUFYLIFE)
- * EXTRACTS: RHR, DEEP SLEEP, TOTAL SLEEP, SPO2 %, STRESS LEVEL & WEIGHT
+ * MODULE 2A: LOCAL OCR & OPTIMIZED REGEX PARSER FOR MI FITNESS
+ * EXTRACTS 4 CORE METRICS: PULSE (RHR), SLEEP, STRESS (1-100), AND SPO2 (%)
  */
 
 import { store } from './state.js';
@@ -16,13 +16,11 @@ export class LocalOCRScanner {
     this.progressText = document.getElementById('ocr-progress-text');
     this.resultsCard = document.getElementById('ocr-results-card');
     
-    // Manual Input Fields (Extended)
+    // 4 Core Daily Manual Input Fields
     this.inputRhr = document.getElementById('manual-rhr-input');
     this.inputSleep = document.getElementById('manual-sleep-input');
-    this.inputTotalSleep = document.getElementById('manual-totalsleep-input');
-    this.inputSpo2 = document.getElementById('manual-spo2-input');
     this.inputStress = document.getElementById('manual-stress-input');
-    this.inputWeight = document.getElementById('manual-weight-input');
+    this.inputSpo2 = document.getElementById('manual-spo2-input');
     this.btnSaveMetrics = document.getElementById('btn-save-manual-metrics');
   }
 
@@ -37,20 +35,16 @@ export class LocalOCRScanner {
     if (this.inputRhr && t.rhr !== null && t.rhr !== undefined) {
       this.inputRhr.value = t.rhr;
     }
-    if (this.inputSleep && t.deepSleepHours !== null && t.deepSleepHours !== undefined) {
+    if (this.inputSleep && t.totalSleepHours !== null && t.totalSleepHours !== undefined) {
+      this.inputSleep.value = t.totalSleepHours;
+    } else if (this.inputSleep && t.deepSleepHours !== null && t.deepSleepHours !== undefined) {
       this.inputSleep.value = t.deepSleepHours;
-    }
-    if (this.inputTotalSleep && t.totalSleepHours !== null && t.totalSleepHours !== undefined) {
-      this.inputTotalSleep.value = t.totalSleepHours;
-    }
-    if (this.inputSpo2 && t.spo2 !== null && t.spo2 !== undefined) {
-      this.inputSpo2.value = t.spo2;
     }
     if (this.inputStress && t.stressLevel !== null && t.stressLevel !== undefined) {
       this.inputStress.value = t.stressLevel;
     }
-    if (this.inputWeight && t.weightKg !== null && t.weightKg !== undefined) {
-      this.inputWeight.value = t.weightKg;
+    if (this.inputSpo2 && t.spo2 !== null && t.spo2 !== undefined) {
+      this.inputSpo2.value = t.spo2;
     }
   }
 
@@ -94,18 +88,15 @@ export class LocalOCRScanner {
   saveManualInputs() {
     const rhrVal = this.inputRhr ? parseInt(this.inputRhr.value, 10) : null;
     const sleepVal = this.inputSleep ? parseFloat(this.inputSleep.value) : null;
-    const totalSleepVal = this.inputTotalSleep ? parseFloat(this.inputTotalSleep.value) : null;
-    const spo2Val = this.inputSpo2 ? parseInt(this.inputSpo2.value, 10) : null;
     const stressVal = this.inputStress ? parseInt(this.inputStress.value, 10) : null;
-    const weightVal = this.inputWeight ? parseFloat(this.inputWeight.value) : null;
+    const spo2Val = this.inputSpo2 ? parseInt(this.inputSpo2.value, 10) : null;
 
     store.updateToday({
       rhr: !isNaN(rhrVal) && rhrVal > 0 ? rhrVal : null,
+      totalSleepHours: !isNaN(sleepVal) && sleepVal >= 0 ? sleepVal : null,
       deepSleepHours: !isNaN(sleepVal) && sleepVal >= 0 ? sleepVal : null,
-      totalSleepHours: !isNaN(totalSleepVal) && totalSleepVal >= 0 ? totalSleepVal : null,
-      spo2: !isNaN(spo2Val) && spo2Val > 0 ? Math.min(100, spo2Val) : null,
       stressLevel: !isNaN(stressVal) && stressVal >= 0 ? Math.min(100, stressVal) : null,
-      weightKg: !isNaN(weightVal) && weightVal > 0 ? weightVal : null
+      spo2: !isNaN(spo2Val) && spo2Val > 0 ? Math.min(100, spo2Val) : null
     });
 
     soundFx.playTactileClick();
@@ -124,25 +115,18 @@ export class LocalOCRScanner {
     }
 
     soundFx.playTactileClick();
-    this.showProgress(10, 'Pre-procesando imagen en chasis local...');
+    this.showProgress(10, 'Pre-procesando captura en chasis local...');
 
     try {
-      // 1. Client-Side Preprocessing via Canvas
       const processedImageBlob = await this.preprocessImage(file);
-      
       this.showProgress(35, 'Iniciando motor OCR en el dispositivo...');
 
-      // 2. Perform On-Device OCR
       const extractedText = await this.performClientOCR(processedImageBlob);
-      
-      this.showProgress(85, 'Extrayendo RHR, Sueño, SpO2 y Estrés...');
+      this.showProgress(85, 'Extrayendo Pulso, Sueño, Estrés y SpO2...');
 
-      // 3. Parse with Expanded Regex for Mi Fitness & EufyLife
-      const parsedData = this.parseTelemetryText(extractedText);
+      const parsedData = this.parseMiFitnessTelemetry(extractedText);
+      this.showProgress(100, 'Telemetría Mi Fitness extraída con éxito.');
 
-      this.showProgress(100, 'Telemetría extraída con éxito.');
-
-      // 4. Update UI and Store
       setTimeout(() => {
         this.hideProgress();
         this.applyParsedData(parsedData);
@@ -151,7 +135,7 @@ export class LocalOCRScanner {
     } catch (err) {
       console.error('Error during local OCR processing:', err);
       this.hideProgress();
-      alert('No se pudo leer la captura automáticamente. Puedes ingresar los datos manualmente en las casillas.');
+      alert('No se pudo leer la captura automáticamente. Puedes ingresar los datos en las 4 casillas.');
     }
   }
 
@@ -173,7 +157,6 @@ export class LocalOCRScanner {
     }
   }
 
-  // Canvas Preprocessing
   preprocessImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -206,13 +189,12 @@ export class LocalOCRScanner {
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Contrast boost
           const imgData = ctx.getImageData(0, 0, width, height);
           const d = imgData.data;
 
           for (let i = 0; i < d.length; i += 4) {
             const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-            const contrastVal = gray > 140 ? Math.min(255, gray * 1.25) : Math.max(0, gray * 0.75);
+            const contrastVal = gray > 135 ? Math.min(255, gray * 1.3) : Math.max(0, gray * 0.7);
             d[i] = contrastVal;
             d[i + 1] = contrastVal;
             d[i + 2] = contrastVal;
@@ -234,7 +216,6 @@ export class LocalOCRScanner {
     });
   }
 
-  // Client-Side OCR Execution
   async performClientOCR(imageBlob) {
     if (typeof window.Tesseract !== 'undefined') {
       const result = await window.Tesseract.recognize(
@@ -244,7 +225,7 @@ export class LocalOCRScanner {
           logger: m => {
             if (m.status === 'recognizing text' && m.progress) {
               const p = Math.round(35 + m.progress * 45);
-              this.showProgress(p, `Leyendo telemetría (${Math.round(m.progress * 100)}%)...`);
+              this.showProgress(p, `Leyendo tarjetas (${Math.round(m.progress * 100)}%)...`);
             }
           }
         }
@@ -289,36 +270,27 @@ export class LocalOCRScanner {
     });
   }
 
-  // Expanded Regex Telemetry Parser for Mi Fitness & EufyLife
-  parseTelemetryText(rawText) {
-    if (!rawText) return { rhr: null, deep_sleep_hours: null, total_sleep_hours: null, spo2: null, stress_level: null, weight_kg: null, app_detected: 'Manual' };
+  // Optimized Parser for Mi Fitness Real Capture Cards
+  parseMiFitnessTelemetry(rawText) {
+    if (!rawText) return { rhr: null, sleep_hours: null, stress_level: null, spo2: null };
 
     const text = rawText.replace(/\r?\n/g, ' ').toLowerCase();
     const result = {
       rhr: null,
-      deep_sleep_hours: null,
-      total_sleep_hours: null,
-      spo2: null,
+      sleep_hours: null,
       stress_level: null,
-      weight_kg: null,
-      app_detected: 'Mi Fitness / Salud'
+      spo2: null,
+      raw_sleep_str: null
     };
 
-    // 1. App Detection
-    if (text.includes('fitness') || text.includes('xiaomi') || text.includes('mi fit') || text.includes('band')) {
-      result.app_detected = 'Mi Fitness';
-    } else if (text.includes('eufy') || text.includes('scale') || text.includes('báscula') || text.includes('bascula')) {
-      result.app_detected = 'EufyLife / Báscula';
-    }
-
-    // 2. Resting Heart Rate (RHR / Pulso en Reposo)
-    const rhrPatterns = [
-      /(?:reposo|rhr|frecuencia\s+en\s+reposo|pulso\s+en\s+reposo)\D{0,15}(\d{2,3})/i,
-      /(?:pulso|frecuencia|card[ií]ac[ao]|bpm)\D{0,10}(\d{2,3})\s*(?:bpm|lpm)?/i,
-      /(\d{2,3})\s*(?:bpm|lpm|ppm)/i
+    // 1. PULSO / RITMO CARDÍACO (ej. "68 LPM", "68 bpm", "pulso 68", "frecuencia 68")
+    const pulsePatterns = [
+      /(\d{2,3})\s*(?:lpm|bpm|ppm)/i,
+      /(?:frecuencia|card[ií]ac[ao]|pulso|reposo|rhr)\D{0,15}(\d{2,3})\s*(?:lpm|bpm)?/i,
+      /(?:ritmo\s*card[ií]aco)\D{0,10}(\d{2,3})/i
     ];
 
-    for (const pat of rhrPatterns) {
+    for (const pat of pulsePatterns) {
       const match = text.match(pat);
       if (match && match[1]) {
         const val = parseInt(match[1], 10);
@@ -329,76 +301,40 @@ export class LocalOCRScanner {
       }
     }
 
-    // 3. Deep Sleep (Sueño Profundo)
-    const deepSleepPatterns = [
-      /(?:profundo|deep)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min|mins?|minutos?)?/i,
-      /(?:profundo|deep)\D{0,10}(\d+[.,]\d+)\s*(?:h|hrs?|horas?)/i
+    // 2. SUEÑO (ej. "6h 4min", "6h 4m", "6 h 4 min", "7h 30m", "6.1 h")
+    const sleepPatterns = [
+      /(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)\s*(?:min|mins?|m|minutos?)/i,
+      /(?:sueño|sueno|sleep|duraci[oó]n)\D{0,15}(\d+)\s*(?:h|hrs?)\s*(\d+)?\s*(?:m|min)?/i,
+      /(\d+[.,]\d+)\s*(?:h|hrs?|horas?)/i
     ];
 
-    for (const pat of deepSleepPatterns) {
+    for (const pat of sleepPatterns) {
       const match = text.match(pat);
       if (match) {
-        if (match[2] !== undefined) {
+        if (match[2] !== undefined && match[2] !== null) {
+          // Format: 6h 4min
           const hrs = parseInt(match[1], 10) || 0;
           const mins = parseInt(match[2], 10) || 0;
-          result.deep_sleep_hours = parseFloat((hrs + (mins / 60)).toFixed(2));
-          break;
-        } else if (match[1]) {
-          const val = parseFloat(match[1].replace(',', '.'));
-          if (val > 0 && val <= 15) {
-            result.deep_sleep_hours = parseFloat(val.toFixed(2));
-            break;
-          }
-        }
-      }
-    }
-
-    // 4. Total Sleep (Sueño Total)
-    const totalSleepPatterns = [
-      /(?:total|sueño\s+total|duraci[oó]n\s+del\s+sueño)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min|mins?)?/i,
-      /(?:sueño|sueno|sleep)\D{0,15}(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)?\s*(?:m|min)?/i,
-      /(\d+)\s*(?:h|hrs)\s*(\d+)\s*(?:m|min)/i
-    ];
-
-    for (const pat of totalSleepPatterns) {
-      const match = text.match(pat);
-      if (match) {
-        if (match[2] !== undefined) {
-          const hrs = parseInt(match[1], 10) || 0;
-          const mins = parseInt(match[2], 10) || 0;
-          result.total_sleep_hours = parseFloat((hrs + (mins / 60)).toFixed(2));
+          const totalHours = hrs + (mins / 60);
+          result.sleep_hours = parseFloat(totalHours.toFixed(1));
+          result.raw_sleep_str = `${hrs}h ${mins}min`;
           break;
         } else if (match[1]) {
           const val = parseFloat(match[1].replace(',', '.'));
           if (val > 0 && val <= 24) {
-            result.total_sleep_hours = parseFloat(val.toFixed(2));
+            result.sleep_hours = parseFloat(val.toFixed(1));
+            result.raw_sleep_str = `${val} h`;
             break;
           }
         }
       }
     }
 
-    // 5. Blood Oxygen (SpO2 %)
-    const spo2Patterns = [
-      /(?:spo2|ox[ií]geno|saturaci[oó]n|o2)\D{0,10}(\d{2,3})\s*%?/i,
-      /(\d{2,3})\s*%\s*(?:spo2|ox[ií]geno)?/i
-    ];
-
-    for (const pat of spo2Patterns) {
-      const match = text.match(pat);
-      if (match && match[1]) {
-        const val = parseInt(match[1], 10);
-        if (val >= 70 && val <= 100) {
-          result.spo2 = val;
-          break;
-        }
-      }
-    }
-
-    // 6. Stress Level (Estrés 1-100)
+    // 3. ESTRÉS (ej. "32", "estrés 32", "puntuación 32", "relajado 32", "32 relajado")
     const stressPatterns = [
-      /(?:estr[eé]s|stress|puntuaci[oó]n\s+de\s+estr[eé]s)\D{0,10}(\d{1,3})/i,
-      /(?:nivel\s+de\s+estr[eé]s)\D{0,8}(\d{1,3})/i
+      /(?:estr[eé]s|stress|puntuaci[oó]n)\D{0,12}(\d{1,3})/i,
+      /(\d{1,3})\s*(?:relajado|moderado|alto|leve)/i,
+      /(?:nivel\s*de\s*estr[eé]s)\D{0,8}(\d{1,3})/i
     ];
 
     for (const pat of stressPatterns) {
@@ -412,19 +348,19 @@ export class LocalOCRScanner {
       }
     }
 
-    // 7. Weight in KG
-    const weightPatterns = [
-      /(?:peso|weight)\D{0,10}(\d{2,3}(?:[.,]\d{1,2})?)\s*(?:kg|kilos?)/i,
-      /(\d{2,3}[.,]\d{1,2})\s*(?:kg|kilos?)/i,
-      /(?:peso|weight)\D{0,8}(\d{2,3}(?:[.,]\d{1,2})?)/i
+    // 4. OXÍGENO EN SANGRE / SpO2 (ej. "95%", "95 %", "spo2 95", "oxígeno 95%")
+    const spo2Patterns = [
+      /(?:spo2|ox[ií]geno|saturaci[oó]n|o2)\D{0,10}(\d{2,3})\s*%?/i,
+      /(\d{2,3})\s*%\s*(?:spo2|ox[ií]geno|saturaci[oó]n)?/i,
+      /(\d{2,3})\s*%/i
     ];
 
-    for (const pat of weightPatterns) {
+    for (const pat of spo2Patterns) {
       const match = text.match(pat);
       if (match && match[1]) {
-        const val = parseFloat(match[1].replace(',', '.'));
-        if (val >= 25 && val <= 300) {
-          result.weight_kg = parseFloat(val.toFixed(1));
+        const val = parseInt(match[1], 10);
+        if (val >= 70 && val <= 100) {
+          result.spo2 = val;
           break;
         }
       }
@@ -435,19 +371,18 @@ export class LocalOCRScanner {
 
   applyParsedData(data) {
     if (this.inputRhr && data.rhr) this.inputRhr.value = data.rhr;
-    if (this.inputSleep && data.deep_sleep_hours) this.inputSleep.value = data.deep_sleep_hours;
-    if (this.inputTotalSleep && data.total_sleep_hours) this.inputTotalSleep.value = data.total_sleep_hours;
-    if (this.inputSpo2 && data.spo2) this.inputSpo2.value = data.spo2;
+    if (this.inputSleep && data.sleep_hours) this.inputSleep.value = data.sleep_hours;
     if (this.inputStress && data.stress_level) this.inputStress.value = data.stress_level;
-    if (this.inputWeight && data.weight_kg) this.inputWeight.value = data.weight_kg;
+    if (this.inputSpo2 && data.spo2) this.inputSpo2.value = data.spo2;
 
     const updates = {};
     if (data.rhr) updates.rhr = data.rhr;
-    if (data.deep_sleep_hours) updates.deepSleepHours = data.deep_sleep_hours;
-    if (data.total_sleep_hours) updates.totalSleepHours = data.total_sleep_hours;
-    if (data.spo2) updates.spo2 = data.spo2;
+    if (data.sleep_hours) {
+      updates.totalSleepHours = data.sleep_hours;
+      updates.deepSleepHours = data.sleep_hours;
+    }
     if (data.stress_level) updates.stressLevel = data.stress_level;
-    if (data.weight_kg) updates.weightKg = data.weight_kg;
+    if (data.spo2) updates.spo2 = data.spo2;
 
     if (Object.keys(updates).length > 0) {
       store.updateToday(updates);
@@ -457,19 +392,17 @@ export class LocalOCRScanner {
     if (this.resultsCard) {
       this.resultsCard.classList.remove('hidden');
       this.resultsCard.innerHTML = `
-        <div style="font-size: 0.88rem; font-weight: bold; color: var(--f1-green); text-transform: uppercase;">
-          ⚡ Telemetría Mi Fitness Detectada
+        <div style="font-size: 0.9rem; font-weight: bold; color: var(--f1-green); text-transform: uppercase;">
+          ⚡ Telemetría Mi Fitness Extraída
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-          ${data.rhr ? `<span class="badge badge-green">❤️ Pulso: ${data.rhr} bpm</span>` : ''}
-          ${data.deep_sleep_hours ? `<span class="badge badge-green">🌙 Profundo: ${data.deep_sleep_hours} h</span>` : ''}
-          ${data.total_sleep_hours ? `<span class="badge badge-green">🛌 Total: ${data.total_sleep_hours} h</span>` : ''}
-          ${data.spo2 ? `<span class="badge badge-green">🫁 SpO2: ${data.spo2}%</span>` : ''}
+          ${data.rhr ? `<span class="badge badge-green">❤️ Pulso: ${data.rhr} LPM</span>` : ''}
+          ${data.sleep_hours ? `<span class="badge badge-green">🌙 Sueño: ${data.raw_sleep_str || `${data.sleep_hours} h`}</span>` : ''}
           ${data.stress_level ? `<span class="badge badge-green">⚡ Estrés: ${data.stress_level}/100</span>` : ''}
-          ${data.weight_kg ? `<span class="badge badge-green">⚖️ Peso: ${data.weight_kg} kg</span>` : ''}
+          ${data.spo2 ? `<span class="badge badge-green">🫁 Oxígeno (SpO2): ${data.spo2}%</span>` : ''}
         </div>
         <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">
-          Valores guardados y reflejados en tu tablero táctico.
+          Valores cargados en tu tablero diario. Puedes editarlos en las casillas inferiores si lo deseas.
         </div>
       `;
     }
