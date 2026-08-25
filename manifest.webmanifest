@@ -1,0 +1,31 @@
+{
+  "name": "PIT CREW - Telemetría Táctica y Salud",
+  "short_name": "PitCrew Salud",
+  "description": "App de Telemetría Táctica, Pacing y Prevención de Crisis para Disautonomía / POTS",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05080c",
+  "theme_color": "#05080c",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "categories": [
+    "health",
+    "medical",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "./assets/f1-badge.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/f1-badge.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

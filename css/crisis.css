@@ -1,0 +1,270 @@
+/* ==========================================================================
+   PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
+   CRISIS SYSTEM & SOS STYLESHEET (FLARES, MEDICAL SHIELD, WALLPAPER)
+   ========================================================================== */
+
+/* 1. Tactical Flare Individual SOS Buttons */
+.crisis-flare-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-sos-contact {
+  min-height: 64px;
+  background: linear-gradient(135deg, #1e0909 0%, #2e0d0d 100%);
+  border: 2px solid var(--f1-red);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.35);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-sos-contact:active {
+  transform: scale(0.97);
+  background: var(--f1-red);
+}
+
+.sos-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.sos-contact-name {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sos-contact-phone {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.sos-whatsapp-icon {
+  background: #25d366;
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(37, 211, 102, 0.4);
+}
+
+/* 2. Fullscreen Bystander Medical Shield (ESCUDO MÉDICO) */
+.medical-shield-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+
+.shield-header-alert {
+  background: #b91c1c;
+  border: 3px solid #ff4444;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: pulseGlow 1.8s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+  100% { box-shadow: 0 0 30px rgba(255, 68, 68, 0.85); }
+}
+
+.shield-alert-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.shield-alert-sub {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fef08a;
+  text-transform: uppercase;
+}
+
+.shield-instructions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.shield-step {
+  background: #111111;
+  border: 2px solid #333333;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.shield-step.critical {
+  border-color: #ef4444;
+  background: #1a0808;
+}
+
+.shield-step-number {
+  background: #ffffff;
+  color: #000000;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.shield-step.critical .shield-step-number {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.shield-step-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.shield-step-text strong {
+  color: #fde047;
+}
+
+.shield-contacts-card {
+  background: #141414;
+  border: 2px solid #444444;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shield-contacts-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.5px;
+}
+
+.shield-call-btn {
+  background: #15803d;
+  color: #ffffff;
+  text-decoration: none;
+  min-height: 52px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.shield-call-btn:active {
+  background: #16a34a;
+}
+
+.shield-footer-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.btn-shield-alarm {
+  flex: 1;
+  min-height: var(--touch-min-target);
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-shield-alarm.sounding {
+  animation: pulseAlarm 0.6s infinite alternate;
+}
+
+@keyframes pulseAlarm {
+  0% { background: #dc2626; transform: scale(1); }
+  100% { background: #ef4444; transform: scale(1.03); }
+}
+
+.btn-shield-close {
+  min-height: var(--touch-min-target);
+  padding: 0 24px;
+  background: #262626;
+  color: #ffffff;
+  border: 2px solid #525252;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 3. SOS Wallpaper Generator */
+.wallpaper-preview-box {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  aspect-ratio: 9 / 16;
+  background: #000000;
+  border: 3px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#sos-wallpaper-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

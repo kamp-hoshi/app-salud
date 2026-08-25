@@ -1,0 +1,569 @@
+/* ==========================================================================
+   PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
+   COMPONENTS STYLESHEET - FUEL TANK, TACTILE CHIPS, BATTERY SLIDER, CARDS
+   ========================================================================== */
+
+/* 1. Tactical Glass Cards */
+.card-tactical {
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card-tactical::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--border-bright);
+}
+
+.card-tactical.accent-green::before { background: var(--f1-green); box-shadow: 0 0 10px var(--f1-green); }
+.card-tactical.accent-amber::before { background: var(--f1-amber); box-shadow: 0 0 10px var(--f1-amber); }
+.card-tactical.accent-red::before { background: var(--f1-red); box-shadow: 0 0 10px var(--f1-red); }
+.card-tactical.accent-cyan::before { background: var(--f1-cyan); box-shadow: 0 0 10px var(--f1-cyan); }
+
+.card-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-title-tactical {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-pure);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title-tactical .icon {
+  font-size: 1.15rem;
+}
+
+/* 2. Fuel Tank Hydration Gauge */
+.fuel-tank-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.fuel-gauge-box {
+  width: 100%;
+  height: 90px;
+  background: #06090e;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-tactical);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.fuel-level-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #00b4d8, #00ff9d);
+  opacity: 0.35;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 0 20px rgba(0, 255, 157, 0.5);
+}
+
+.fuel-level-fill.overload {
+  background: linear-gradient(90deg, #00ff9d, #38bdf8);
+  opacity: 0.5;
+}
+
+.fuel-gauge-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.fuel-amount {
+  font-family: var(--font-mono);
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--text-pure);
+  letter-spacing: -0.5px;
+}
+
+.fuel-amount .unit {
+  font-size: 1rem;
+  color: var(--f1-green);
+  margin-left: 2px;
+}
+
+.fuel-target-sub {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.fuel-tank-grid-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-hydration {
+  min-height: var(--touch-min-target);
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-hydration:active {
+  transform: scale(0.96);
+  border-color: var(--f1-green);
+  background: var(--f1-green-subtle);
+}
+
+.btn-hydration.primary-add {
+  border-color: rgba(0, 255, 157, 0.35);
+  background: rgba(0, 255, 157, 0.08);
+  color: var(--f1-green);
+}
+
+.btn-hydration.sub-action {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.btn-hydration.sub-action:active {
+  border-color: var(--f1-amber);
+  color: var(--f1-amber);
+}
+
+.btn-hydration.electrolytes-chip {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--f1-amber);
+  grid-column: span 3;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.btn-hydration.electrolytes-chip.logged {
+  background: var(--f1-amber);
+  color: var(--text-inverse);
+  box-shadow: 0 0 12px var(--f1-amber-glow);
+}
+
+/* 3. Perceived Battery Slider */
+.battery-slider-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.battery-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.battery-percentage-display {
+  font-family: var(--font-mono);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--f1-green);
+}
+
+.battery-state-tag {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+}
+
+.battery-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: #06090e;
+  border: 1px solid var(--border-tactical);
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.battery-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--f1-green);
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 14px var(--f1-green-glow);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.battery-slider::-moz-range-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--f1-green);
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 14px var(--f1-green-glow);
+  cursor: pointer;
+}
+
+.battery-slider:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.battery-presets-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.btn-preset {
+  min-height: 44px;
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-preset:active, .btn-preset.active {
+  background: var(--border-bright);
+  color: var(--text-pure);
+  border-color: var(--text-muted);
+}
+
+/* 4. Tactical 1-Touch Symptom Chips */
+.symptom-section-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.symptom-category-header {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.symptom-chips-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .symptom-chips-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chip-tactical {
+  min-height: var(--touch-min-target);
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  line-height: 1.25;
+}
+
+.chip-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+  font-size: 0.8rem;
+  color: transparent;
+}
+
+.chip-tactical:active {
+  transform: scale(0.98);
+}
+
+.chip-tactical.selected {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--text-pure);
+}
+
+.chip-tactical.selected .chip-checkbox {
+  background: var(--f1-red);
+  border-color: var(--f1-red);
+  color: #ffffff;
+}
+
+/* Category Specific Selected Colors */
+.category-vascular .chip-tactical.selected {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.category-chassis .chip-tactical.selected {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.6);
+}
+.category-chassis .chip-tactical.selected .chip-checkbox {
+  background: var(--f1-amber);
+  border-color: var(--f1-amber);
+}
+
+.category-cognitive .chip-tactical.selected {
+  background: rgba(168, 85, 247, 0.14);
+  border-color: rgba(168, 85, 247, 0.6);
+}
+.category-cognitive .chip-tactical.selected .chip-checkbox {
+  background: var(--f1-purple);
+  border-color: var(--f1-purple);
+}
+
+/* 5. Metrics Telemetry Grid */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-pure);
+}
+
+.metric-value .unit {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* 6. Anti-Tremor Undo Snackbar */
+.snackbar-undo-container {
+  position: fixed;
+  bottom: calc(var(--touch-min-target) + 24px);
+  left: 16px;
+  right: 16px;
+  max-width: 608px;
+  margin: 0 auto;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.snackbar-undo {
+  background: #111a26;
+  border: 1px solid var(--f1-green);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 15px var(--f1-green-glow);
+  pointer-events: auto;
+  animation: slideUpSnack 0.25s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes slideUpSnack {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.snack-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-pure);
+}
+
+.btn-snack-undo {
+  background: var(--f1-green);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.snack-countdown-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--f1-green);
+  width: 100%;
+  animation: countdown 4s linear forwards;
+}
+
+@keyframes countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* 7. Tactical Buttons */
+.btn-primary-tactical {
+  min-height: var(--touch-min-target);
+  background: var(--f1-green);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 15px var(--f1-green-glow);
+  transition: all var(--transition-fast);
+}
+
+.btn-primary-tactical:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.btn-secondary-tactical {
+  min-height: var(--touch-min-target);
+  background: var(--bg-card-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary-tactical:active {
+  background: var(--border-bright);
+}
+
+/* 8. Modern Modals */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 5, 8, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-sheet {
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
