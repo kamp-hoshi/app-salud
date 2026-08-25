@@ -1,21 +1,21 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
  * MODULE 6: CLOUD SYNC & USER ACCOUNTS (FIREBASE AUTH & FIRESTORE)
- * LOCAL-FIRST WITH AUTOMATIC BI-DIRECTIONAL CLOUD REPLICATION
+ * LOCAL-FIRST WITH AUTOMATIC BI-DIRECTIONAL CLOUD REPLICATION & GATEKEEPER
  */
 
 import { store } from './state.js';
 import { soundFx } from './audio-synth.js';
 
-// Default Firebase Configuration
-// If you have your Firebase Project config, you can paste it here or in the app's Settings panel:
+// Default Firebase Configuration (pitcrew-salud)
 export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCrEb6csrqMuc31mxbTYgWHAmsBmDOTW0k",
+  authDomain: "pitcrew-salud.firebaseapp.com",
+  projectId: "pitcrew-salud",
+  storageBucket: "pitcrew-salud.firebasestorage.app",
+  messagingSenderId: "954608400986",
+  appId: "1:954608400986:web:4696d805523eacf39a3663",
+  measurementId: "G-420S99N1QX"
 };
 
 export class CloudSyncManager {
@@ -23,16 +23,36 @@ export class CloudSyncManager {
     this.firebaseApp = null;
     this.auth = null;
     this.db = null;
+    this.analytics = null;
     this.currentUser = null;
     this.isSyncing = false;
     this.lastSyncTime = null;
     this.syncTimer = null;
+    this.isAuthInitialized = false;
+    this.authCallbacks = [];
 
-    // UI elements
+    // Gatekeeper Fullscreen UI Elements
+    this.gatekeeperScreen = document.getElementById('auth-gatekeeper-screen');
+    this.gatekeeperLoading = document.getElementById('auth-loading-screen');
+    this.gatekeeperTabLogin = document.getElementById('gatekeeper-tab-login');
+    this.gatekeeperTabRegister = document.getElementById('gatekeeper-tab-register');
+    this.gatekeeperErrorBanner = document.getElementById('gatekeeper-error-banner');
+    this.btnGatekeeperGoogle = document.getElementById('btn-gatekeeper-google');
+    this.formGatekeeperAuth = document.getElementById('form-gatekeeper-auth');
+    this.gatekeeperNameGroup = document.getElementById('gatekeeper-name-group');
+    this.gatekeeperNameInput = document.getElementById('gatekeeper-name-input');
+    this.gatekeeperEmailInput = document.getElementById('gatekeeper-email-input');
+    this.gatekeeperPasswordInput = document.getElementById('gatekeeper-password-input');
+    this.btnGatekeeperForgot = document.getElementById('btn-gatekeeper-forgot');
+    this.btnGatekeeperSubmit = document.getElementById('btn-gatekeeper-submit');
+    this.gatekeeperMode = 'LOGIN';
+
+    // Header UI elements
     this.headerUserBtn = document.getElementById('header-user-badge-btn');
     this.headerUserDot = document.getElementById('header-user-sync-dot');
     this.headerUserText = document.getElementById('header-user-name');
 
+    // Account Modal elements (legacy / header popup)
     this.authModal = document.getElementById('auth-modal');
     this.btnCloseAuth = document.getElementById('btn-close-auth-modal');
     this.btnGoogleLogin = document.getElementById('btn-google-signin');
@@ -41,14 +61,19 @@ export class CloudSyncManager {
     this.btnSwitchToLogin = document.getElementById('btn-switch-auth-login');
     this.btnForgotPassword = document.getElementById('btn-forgot-password');
     this.authErrorBanner = document.getElementById('auth-error-banner');
-
     this.accountDetailsView = document.getElementById('auth-account-view');
     this.accountFormView = document.getElementById('auth-forms-view');
     this.btnLogout = document.getElementById('btn-auth-logout');
     this.btnManualSync = document.getElementById('btn-manual-sync-now');
     this.syncStatusText = document.getElementById('auth-sync-status-text');
 
-    // Config setup elements
+    // Settings View Account Card elements
+    this.settingsUserEmailDisplay = document.getElementById('settings-user-email-display');
+    this.settingsUserSyncText = document.getElementById('settings-user-sync-text');
+    this.btnSettingsSync = document.getElementById('btn-settings-sync-now');
+    this.btnSettingsLogout = document.getElementById('btn-settings-logout');
+
+    // Config setup elements (in case custom override is needed)
     this.btnToggleConfigBox = document.getElementById('btn-toggle-firebase-config');
     this.configSetupBox = document.getElementById('firebase-config-setup-box');
     this.configTextarea = document.getElementById('firebase-config-textarea');
@@ -60,6 +85,28 @@ export class CloudSyncManager {
     this.bindEvents();
     await this.initFirebase();
     this.setupOnlineListeners();
+  }
+
+  // Subscribe to Auth State Changes
+  onAuthStateChange(callback) {
+    if (typeof callback === 'function') {
+      this.authCallbacks.push(callback);
+      if (this.isAuthInitialized) {
+        callback(this.currentUser);
+      }
+    }
+  }
+
+  notifyAuthState(user) {
+    this.isAuthInitialized = true;
+    this.currentUser = user;
+    this.authCallbacks.forEach(cb => {
+      try {
+        cb(user);
+      } catch (err) {
+        console.error('Error in auth callback:', err);
+      }
+    });
   }
 
   // Load custom or default config
@@ -83,17 +130,14 @@ export class CloudSyncManager {
     if (!rawText) return null;
     let text = rawText.trim();
 
-    // If pasted as JS object `const firebaseConfig = { ... };`
     const objectMatch = text.match(/\{[\s\S]*\}/);
     if (objectMatch) {
       text = objectMatch[0];
     }
 
     try {
-      // First try JSON.parse
       return JSON.parse(text);
     } catch (e) {
-      // Fallback: extract properties using regex
       const extract = (key) => {
         const match = text.match(new RegExp(`(?:["']?${key}["']?\\s*:\\s*["']([^"']+)["'])`, 'i'));
         return match ? match[1] : '';
@@ -105,9 +149,10 @@ export class CloudSyncManager {
       const storageBucket = extract('storageBucket');
       const messagingSenderId = extract('messagingSenderId');
       const appId = extract('appId');
+      const measurementId = extract('measurementId');
 
       if (apiKey && projectId) {
-        return { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
+        return { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId, measurementId };
       }
     }
     return null;
@@ -138,13 +183,14 @@ export class CloudSyncManager {
       } else {
         this.configStatusNotice.innerHTML = `
           <span style="color: var(--f1-amber); font-weight: bold;">🟡 Estado:</span> 
-          <span>Modo Local (Pega las credenciales de tu proyecto para activar la nube)</span>
+          <span>Modo Local</span>
         `;
       }
     }
 
     if (!hasConfig) {
       this.updateUIForLoggedOut();
+      this.notifyAuthState(null);
       return;
     }
 
@@ -182,21 +228,34 @@ export class CloudSyncManager {
         }
       }
 
-      // Listen for auth state
+      // Initialize Analytics if supported
+      try {
+        const { getAnalytics, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js');
+        if (await isSupported() && config.measurementId) {
+          this.analytics = getAnalytics(this.firebaseApp);
+        }
+      } catch (analyticsErr) {
+        console.warn('Analytics initialization skipped:', analyticsErr);
+      }
+
+      // Listen for auth state changes & session persistence
       onAuthStateChanged(this.auth, (user) => {
         if (user) {
           this.currentUser = user;
           this.updateUIForLoggedIn(user);
           this.syncWithCloud();
+          this.notifyAuthState(user);
         } else {
           this.currentUser = null;
           this.updateUIForLoggedOut();
+          this.notifyAuthState(null);
         }
       });
 
     } catch (err) {
-      console.warn('Firebase initialization notice (running in local mode):', err);
+      console.warn('Firebase initialization error:', err);
       this.updateUIForLoggedOut();
+      this.notifyAuthState(null);
     }
   }
 
@@ -226,7 +285,44 @@ export class CloudSyncManager {
   }
 
   bindEvents() {
-    // Open Auth Modal from header badge & settings button
+    // 1. Gatekeeper Tabs (Login vs Register)
+    if (this.gatekeeperTabLogin) {
+      this.gatekeeperTabLogin.addEventListener('click', () => {
+        soundFx.playTactileClick();
+        this.setGatekeeperMode('LOGIN');
+      });
+    }
+
+    if (this.gatekeeperTabRegister) {
+      this.gatekeeperTabRegister.addEventListener('click', () => {
+        soundFx.playTactileClick();
+        this.setGatekeeperMode('REGISTER');
+      });
+    }
+
+    // 2. Gatekeeper Google Sign-in
+    if (this.btnGatekeeperGoogle) {
+      this.btnGatekeeperGoogle.addEventListener('click', () => {
+        this.signInWithGoogle();
+      });
+    }
+
+    // 3. Gatekeeper Form Submit (Email Auth)
+    if (this.formGatekeeperAuth) {
+      this.formGatekeeperAuth.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleGatekeeperEmailAuth();
+      });
+    }
+
+    // 4. Gatekeeper Forgot Password
+    if (this.btnGatekeeperForgot) {
+      this.btnGatekeeperForgot.addEventListener('click', () => {
+        this.handleGatekeeperForgotPassword();
+      });
+    }
+
+    // 5. Header User Badge -> Open Account Modal
     if (this.headerUserBtn) {
       this.headerUserBtn.addEventListener('click', () => {
         soundFx.playTactileClick();
@@ -234,21 +330,60 @@ export class CloudSyncManager {
       });
     }
 
-    const btnOpenSettings = document.getElementById('btn-open-cloud-account-settings');
-    if (btnOpenSettings) {
-      btnOpenSettings.addEventListener('click', () => {
+    // 6. Settings Buttons (Sync & Direct Logout)
+    if (this.btnSettingsSync) {
+      this.btnSettingsSync.addEventListener('click', () => {
         soundFx.playTactileClick();
-        this.openAuthModal();
+        this.syncWithCloud(true);
       });
     }
 
+    if (this.btnSettingsLogout) {
+      this.btnSettingsLogout.addEventListener('click', () => {
+        this.signOutUser();
+      });
+    }
+
+    // 7. Modal Controls
     if (this.btnCloseAuth) {
       this.btnCloseAuth.addEventListener('click', () => {
         this.closeAuthModal();
       });
     }
 
-    // Toggle Config Paste Box
+    if (this.btnGoogleLogin) {
+      this.btnGoogleLogin.addEventListener('click', () => {
+        this.signInWithGoogle();
+      });
+    }
+
+    if (this.formEmailAuth) {
+      this.formEmailAuth.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleEmailAuth();
+      });
+    }
+
+    if (this.btnLogout) {
+      this.btnLogout.addEventListener('click', () => {
+        this.signOutUser();
+      });
+    }
+
+    if (this.btnManualSync) {
+      this.btnManualSync.addEventListener('click', () => {
+        soundFx.playTactileClick();
+        this.syncWithCloud(true);
+      });
+    }
+
+    if (this.btnForgotPassword) {
+      this.btnForgotPassword.addEventListener('click', () => {
+        this.handleForgotPassword();
+      });
+    }
+
+    // 8. Config Accordion
     if (this.btnToggleConfigBox && this.configSetupBox) {
       this.btnToggleConfigBox.addEventListener('click', () => {
         soundFx.playTactileClick();
@@ -262,7 +397,6 @@ export class CloudSyncManager {
       });
     }
 
-    // Save Config Button
     if (this.btnSaveConfig && this.configTextarea) {
       this.btnSaveConfig.addEventListener('click', () => {
         const raw = this.configTextarea.value;
@@ -274,108 +408,40 @@ export class CloudSyncManager {
 
         const saved = this.saveFirebaseConfig(parsed);
         if (saved) {
-          alert(`✅ ¡Credenciales guardadas con éxito para el proyecto: ${parsed.projectId}! Ya puedes iniciar sesión.`);
+          alert(`✅ ¡Credenciales guardadas para el proyecto ${parsed.projectId}!`);
           if (this.configSetupBox) this.configSetupBox.classList.add('hidden');
           this.clearAuthError();
         }
       });
     }
-
-    // Google Sign-In
-    if (this.btnGoogleLogin) {
-      this.btnGoogleLogin.addEventListener('click', () => {
-        this.signInWithGoogle();
-      });
-    }
-
-    // Email/Password Form
-    if (this.formEmailAuth) {
-      this.formEmailAuth.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.handleEmailAuth();
-      });
-    }
-
-    // Switch between Login and Register views
-    if (this.btnSwitchToRegister) {
-      this.btnSwitchToRegister.addEventListener('click', () => {
-        this.setAuthMode('REGISTER');
-      });
-    }
-
-    if (this.btnSwitchToLogin) {
-      this.btnSwitchToLogin.addEventListener('click', () => {
-        this.setAuthMode('LOGIN');
-      });
-    }
-
-    // Forgot Password
-    if (this.btnForgotPassword) {
-      this.btnForgotPassword.addEventListener('click', () => {
-        this.handleForgotPassword();
-      });
-    }
-
-    // Logout
-    if (this.btnLogout) {
-      this.btnLogout.addEventListener('click', () => {
-        this.signOutUser();
-      });
-    }
-
-    // Manual Sync Button
-    if (this.btnManualSync) {
-      this.btnManualSync.addEventListener('click', () => {
-        soundFx.playTactileClick();
-        this.syncWithCloud(true);
-      });
-    }
   }
 
-  openAuthModal() {
-    if (this.authModal) {
-      this.authModal.classList.remove('hidden');
-      if (this.currentUser) {
-        if (this.accountDetailsView) this.accountDetailsView.classList.remove('hidden');
-        if (this.accountFormView) this.accountFormView.classList.add('hidden');
-      } else {
-        if (this.accountDetailsView) this.accountDetailsView.classList.add('hidden');
-        if (this.accountFormView) this.accountFormView.classList.remove('hidden');
-      }
-    }
-  }
-
-  closeAuthModal() {
-    if (this.authModal) {
-      this.authModal.classList.add('hidden');
-    }
-  }
-
-  setAuthMode(mode) {
-    const title = document.getElementById('auth-modal-title');
-    const submitBtn = document.getElementById('btn-email-submit');
-    const nameGroup = document.getElementById('auth-name-group');
-
+  setGatekeeperMode(mode) {
+    this.gatekeeperMode = mode;
     this.clearAuthError();
 
     if (mode === 'REGISTER') {
-      if (title) title.textContent = 'Crear Cuenta en la Nube';
-      if (submitBtn) submitBtn.textContent = 'Registrarme y Sincronizar';
-      if (nameGroup) nameGroup.classList.remove('hidden');
-      if (this.btnSwitchToRegister) this.btnSwitchToRegister.classList.add('hidden');
-      if (this.btnSwitchToLogin) this.btnSwitchToLogin.classList.remove('hidden');
-      this.authMode = 'REGISTER';
+      if (this.gatekeeperTabRegister) this.gatekeeperTabRegister.classList.add('active');
+      if (this.gatekeeperTabLogin) this.gatekeeperTabLogin.classList.remove('active');
+      if (this.gatekeeperNameGroup) this.gatekeeperNameGroup.classList.remove('hidden');
+      if (this.btnGatekeeperSubmit) this.btnGatekeeperSubmit.textContent = 'Crear Cuenta & Sincronizar';
+      const forgotRow = document.getElementById('gatekeeper-forgot-row');
+      if (forgotRow) forgotRow.classList.add('hidden');
     } else {
-      if (title) title.textContent = 'Iniciar Sesión en la Nube';
-      if (submitBtn) submitBtn.textContent = 'Iniciar Sesión';
-      if (nameGroup) nameGroup.classList.add('hidden');
-      if (this.btnSwitchToRegister) this.btnSwitchToRegister.classList.remove('hidden');
-      if (this.btnSwitchToLogin) this.btnSwitchToLogin.classList.add('hidden');
-      this.authMode = 'LOGIN';
+      if (this.gatekeeperTabLogin) this.gatekeeperTabLogin.classList.add('active');
+      if (this.gatekeeperTabRegister) this.gatekeeperTabRegister.classList.remove('active');
+      if (this.gatekeeperNameGroup) this.gatekeeperNameGroup.classList.add('hidden');
+      if (this.btnGatekeeperSubmit) this.btnGatekeeperSubmit.textContent = 'Iniciar Sesión';
+      const forgotRow = document.getElementById('gatekeeper-forgot-row');
+      if (forgotRow) forgotRow.classList.remove('hidden');
     }
   }
 
   showAuthError(msg) {
+    if (this.gatekeeperErrorBanner) {
+      this.gatekeeperErrorBanner.innerHTML = msg;
+      this.gatekeeperErrorBanner.classList.remove('hidden');
+    }
     if (this.authErrorBanner) {
       this.authErrorBanner.innerHTML = msg;
       this.authErrorBanner.classList.remove('hidden');
@@ -383,6 +449,10 @@ export class CloudSyncManager {
   }
 
   clearAuthError() {
+    if (this.gatekeeperErrorBanner) {
+      this.gatekeeperErrorBanner.textContent = '';
+      this.gatekeeperErrorBanner.classList.add('hidden');
+    }
     if (this.authErrorBanner) {
       this.authErrorBanner.textContent = '';
       this.authErrorBanner.classList.add('hidden');
@@ -392,13 +462,7 @@ export class CloudSyncManager {
   async signInWithGoogle() {
     const config = this.getFirebaseConfig();
     if (!this.auth || !this.firebaseSDK || !config.apiKey) {
-      this.showAuthError(`
-        <div>⚠️ Servicio de nube no configurado aún.</div>
-        <div style="font-size: 0.78rem; font-weight: normal; margin-top: 4px;">
-          Toca en <strong>"⚙️ Configurar Credenciales de Firebase"</strong> abajo para pegar las claves de tu proyecto gratuito.
-        </div>
-      `);
-      if (this.configSetupBox) this.configSetupBox.classList.remove('hidden');
+      this.showAuthError('⚠️ Servicio de autenticación no inicializado aún.');
       return;
     }
 
@@ -414,19 +478,57 @@ export class CloudSyncManager {
     }
   }
 
-  async handleEmailAuth() {
+  async handleGatekeeperEmailAuth() {
     const config = this.getFirebaseConfig();
     if (!this.auth || !this.firebaseSDK || !config.apiKey) {
-      this.showAuthError(`
-        <div>⚠️ Servicio de nube no configurado aún.</div>
-        <div style="font-size: 0.78rem; font-weight: normal; margin-top: 4px;">
-          Toca en <strong>"⚙️ Configurar Credenciales de Firebase"</strong> abajo para pegar las claves de tu proyecto gratuito.
-        </div>
-      `);
-      if (this.configSetupBox) this.configSetupBox.classList.remove('hidden');
+      this.showAuthError('⚠️ Servicio de autenticación no inicializado.');
       return;
     }
 
+    const email = this.gatekeeperEmailInput ? this.gatekeeperEmailInput.value.trim() : '';
+    const password = this.gatekeeperPasswordInput ? this.gatekeeperPasswordInput.value : '';
+    const displayName = this.gatekeeperNameInput ? this.gatekeeperNameInput.value.trim() : '';
+
+    if (!email || !password) {
+      this.showAuthError('Por favor completa tu correo y contraseña.');
+      return;
+    }
+
+    try {
+      this.clearAuthError();
+      if (this.gatekeeperMode === 'REGISTER') {
+        const cred = await this.firebaseSDK.createUserWithEmailAndPassword(this.auth, email, password);
+        if (displayName && cred.user) {
+          store.updateProfile({ userName: displayName });
+        }
+      } else {
+        await this.firebaseSDK.signInWithEmailAndPassword(this.auth, email, password);
+      }
+      soundFx.playHydrationSound();
+    } catch (err) {
+      console.error('Gatekeeper Auth error:', err);
+      this.showAuthError(this.translateAuthError(err.code || err.message));
+    }
+  }
+
+  async handleGatekeeperForgotPassword() {
+    if (!this.auth || !this.firebaseSDK) return;
+    const email = this.gatekeeperEmailInput ? this.gatekeeperEmailInput.value.trim() : '';
+
+    if (!email) {
+      this.showAuthError('Escribe tu correo en la casilla para enviarte el enlace de recuperación.');
+      return;
+    }
+
+    try {
+      await this.firebaseSDK.sendPasswordResetEmail(this.auth, email);
+      alert(`✅ Se ha enviado un enlace de recuperación a ${email}. Revisa tu bandeja de entrada.`);
+    } catch (err) {
+      this.showAuthError(this.translateAuthError(err.code || err.message));
+    }
+  }
+
+  async handleEmailAuth() {
     const emailInput = document.getElementById('auth-email-input');
     const passwordInput = document.getElementById('auth-password-input');
     const nameInput = document.getElementById('auth-name-input');
@@ -482,9 +584,30 @@ export class CloudSyncManager {
         await this.firebaseSDK.signOut(this.auth);
         soundFx.playTactileClick();
         this.closeAuthModal();
+        this.updateUIForLoggedOut();
+        this.notifyAuthState(null);
       } catch (err) {
         console.error('Sign out error:', err);
       }
+    }
+  }
+
+  openAuthModal() {
+    if (this.authModal) {
+      this.authModal.classList.remove('hidden');
+      if (this.currentUser) {
+        if (this.accountDetailsView) this.accountDetailsView.classList.remove('hidden');
+        if (this.accountFormView) this.accountFormView.classList.add('hidden');
+      } else {
+        if (this.accountDetailsView) this.accountDetailsView.classList.add('hidden');
+        if (this.accountFormView) this.accountFormView.classList.remove('hidden');
+      }
+    }
+  }
+
+  closeAuthModal() {
+    if (this.authModal) {
+      this.authModal.classList.add('hidden');
     }
   }
 
@@ -536,35 +659,48 @@ export class CloudSyncManager {
       }
 
     } catch (err) {
-      console.warn('Cloud sync error (fallback to local):', err);
+      console.warn('Cloud sync error:', err);
       this.isSyncing = false;
       this.updateSyncBadge('offline');
     }
   }
 
   updateSyncBadge(status) {
-    if (!this.headerUserDot) return;
-
-    if (status === 'synced') {
-      this.headerUserDot.className = 'status-dot active';
-      if (this.syncStatusText) this.syncStatusText.textContent = `Sincronizado: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } else if (status === 'syncing') {
-      this.headerUserDot.className = 'status-dot blinking';
-      if (this.syncStatusText) this.syncStatusText.textContent = 'Sincronizando con la nube...';
-    } else {
-      this.headerUserDot.className = 'status-dot offline';
-      if (this.syncStatusText) this.syncStatusText.textContent = 'Modo Local / Sin conexión';
+    if (this.headerUserDot) {
+      if (status === 'synced') {
+        this.headerUserDot.className = 'status-dot active';
+        if (this.syncStatusText) this.syncStatusText.textContent = `Sincronizado: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        if (this.settingsUserSyncText) this.settingsUserSyncText.textContent = `Sincronizado: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      } else if (status === 'syncing') {
+        this.headerUserDot.className = 'status-dot blinking';
+        if (this.syncStatusText) this.syncStatusText.textContent = 'Sincronizando con la nube...';
+        if (this.settingsUserSyncText) this.settingsUserSyncText.textContent = 'Sincronizando...';
+      } else {
+        this.headerUserDot.className = 'status-dot offline';
+        if (this.syncStatusText) this.syncStatusText.textContent = 'Modo Local / Sin conexión';
+        if (this.settingsUserSyncText) this.settingsUserSyncText.textContent = 'Desconectado';
+      }
     }
   }
 
   updateUIForLoggedIn(user) {
-    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Usuario');
+    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Piloto');
+    const userEmail = user.email || 'Conectado con Google';
+
     if (this.headerUserText) {
       this.headerUserText.textContent = displayName;
     }
+    if (this.settingsUserEmailDisplay) {
+      this.settingsUserEmailDisplay.textContent = userEmail;
+    }
     const accEmail = document.getElementById('auth-account-email');
-    if (accEmail) accEmail.textContent = user.email || 'Conectado con Google';
+    if (accEmail) accEmail.textContent = userEmail;
+
     this.updateSyncBadge('synced');
+
+    // Hide Loading & Gatekeeper screens
+    if (this.gatekeeperLoading) this.gatekeeperLoading.classList.add('hidden');
+    if (this.gatekeeperScreen) this.gatekeeperScreen.classList.add('hidden');
   }
 
   updateUIForLoggedOut() {
@@ -574,9 +710,16 @@ export class CloudSyncManager {
     if (this.headerUserDot) {
       this.headerUserDot.className = 'status-dot offline';
     }
-    if (this.syncStatusText) {
-      this.syncStatusText.textContent = 'Modo Local (Inicia sesión para multi-dispositivo)';
+    if (this.settingsUserEmailDisplay) {
+      this.settingsUserEmailDisplay.textContent = 'No autenticado';
     }
+    if (this.syncStatusText) {
+      this.syncStatusText.textContent = 'Modo Local';
+    }
+
+    // Hide Loading, show Gatekeeper
+    if (this.gatekeeperLoading) this.gatekeeperLoading.classList.add('hidden');
+    if (this.gatekeeperScreen) this.gatekeeperScreen.classList.remove('hidden');
   }
 
   translateAuthError(code) {
@@ -588,15 +731,15 @@ export class CloudSyncManager {
       case 'auth/invalid-credential':
         return 'Correo o contraseña incorrectos.';
       case 'auth/email-already-in-use':
-        return 'Ya existe una cuenta con este correo.';
+        return 'Ya existe una cuenta con este correo. Inicia sesión en su lugar.';
       case 'auth/weak-password':
         return 'La contraseña debe tener al menos 6 caracteres.';
       case 'auth/popup-closed-by-user':
         return 'Se cerró la ventana de Google antes de finalizar.';
       case 'auth/unauthorized-domain':
-        return 'Dominio no autorizado. En Firebase Console > Authentication > Settings > Authorized domains, agrega tu dominio.';
+        return 'Dominio no autorizado en Firebase Console.';
       default:
-        return `Error de acceso: ${code}`;
+        return `Error de autenticación: ${code}`;
     }
   }
 }

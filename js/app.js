@@ -1,6 +1,6 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * APPLICATION ORCHESTRATOR & PWA CONTROLLER
+ * APPLICATION ORCHESTRATOR & PWA CONTROLLER WITH AUTHENTICATION GATEKEEPER
  */
 
 import { store } from './state.js';
@@ -21,6 +21,7 @@ class AppController {
   constructor() {
     this.currentView = 'telemetry';
     this.deferredInstallPrompt = null;
+    this.isAuthenticated = false;
   }
 
   init() {
@@ -60,7 +61,6 @@ class AppController {
 
     // 2. Setup Routing and Dock Navigation
     this.bindNavigation();
-    this.handleRouteFromHash();
 
     // 3. Register Service Worker & Install Prompt
     this.setupPWA();
@@ -68,6 +68,53 @@ class AppController {
     // 4. Update Header Subtitle with Diagnosis
     this.updateHeaderProfile();
     store.on('profile:updated', () => this.updateHeaderProfile());
+
+    // 5. Connect Authentication Gatekeeper Listener
+    this.cloudSync.onAuthStateChange((user) => {
+      this.handleAuthStateChange(user);
+    });
+  }
+
+  handleAuthStateChange(user) {
+    const appRoot = document.getElementById('app-root');
+    const loadingScreen = document.getElementById('auth-loading-screen');
+    const gatekeeperScreen = document.getElementById('auth-gatekeeper-screen');
+
+    if (user) {
+      // User is authenticated
+      this.isAuthenticated = true;
+
+      // Hide gatekeeper & loading splash
+      if (loadingScreen) loadingScreen.classList.add('hidden');
+      if (gatekeeperScreen) gatekeeperScreen.classList.add('hidden');
+
+      // Show Main Application
+      if (appRoot) appRoot.classList.remove('hidden');
+
+      // Check for first-time calibration onboarding
+      this.onboarding.checkAndShowOnboarding();
+
+      // Restore active view from URL hash
+      this.handleRouteFromHash();
+
+    } else {
+      // User is logged out / unauthenticated
+      this.isAuthenticated = false;
+
+      // Hide Main Application & Modals
+      if (appRoot) appRoot.classList.add('hidden');
+      if (this.onboarding) this.onboarding.hideOnboarding();
+
+      const shieldModal = document.getElementById('medical-shield-modal');
+      if (shieldModal) shieldModal.classList.add('hidden');
+
+      // Hide Loading Splash & Show Gatekeeper Screen
+      if (loadingScreen) loadingScreen.classList.add('hidden');
+      if (gatekeeperScreen) {
+        gatekeeperScreen.classList.remove('hidden');
+        this.cloudSync.setGatekeeperMode('LOGIN');
+      }
+    }
   }
 
   updateHeaderProfile() {
@@ -81,6 +128,7 @@ class AppController {
     // Dock Tab Buttons
     document.querySelectorAll('.dock-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (!this.isAuthenticated) return;
         soundFx.playTactileClick();
         const viewId = btn.dataset.view;
         this.switchView(viewId);
@@ -90,11 +138,15 @@ class AppController {
 
     // Handle Hash changes (back/forward navigation)
     window.addEventListener('hashchange', () => {
-      this.handleRouteFromHash();
+      if (this.isAuthenticated) {
+        this.handleRouteFromHash();
+      }
     });
   }
 
   handleRouteFromHash() {
+    if (!this.isAuthenticated) return;
+
     const hash = window.location.hash.replace('#', '');
     const validViews = ['telemetry', 'symptoms', 'pacing', 'sos', 'settings', 'history'];
     if (validViews.includes(hash)) {
@@ -105,6 +157,8 @@ class AppController {
   }
 
   switchView(viewId) {
+    if (!this.isAuthenticated) return;
+
     this.currentView = viewId;
 
     // Toggle active view sections
@@ -148,7 +202,7 @@ class AppController {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredInstallPrompt = e;
-      if (installBanner) {
+      if (installBanner && this.isAuthenticated) {
         installBanner.classList.remove('hidden');
       }
     });

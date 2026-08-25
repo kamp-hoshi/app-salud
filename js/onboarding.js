@@ -17,11 +17,14 @@ export class OnboardingManager {
 
   init() {
     this.renderChronicCheckboxes();
+    this.bindEvents();
+    this.renderSettings();
+  }
+
+  checkAndShowOnboarding() {
     if (!store.profile.isOnboarded) {
       this.showOnboarding();
     }
-    this.bindEvents();
-    this.renderSettings();
   }
 
   renderChronicCheckboxes() {

@@ -287,3 +287,301 @@
   border-color: var(--f1-green);
   box-shadow: 0 0 10px var(--f1-green-glow);
 }
+
+/* ==========================================================================
+   AUTHENTICATION GATEKEEPER & LOADING SPLASH STYLES
+   ========================================================================== */
+
+/* 1. Loading Splash Screen */
+.auth-gatekeeper-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--bg-deep);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.auth-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+.auth-loader-badge {
+  width: 64px;
+  height: 64px;
+}
+
+.pulse-glow {
+  animation: pulseNeon 2s infinite ease-in-out;
+}
+
+@keyframes pulseNeon {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(0, 255, 157, 0.4));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(0, 255, 157, 0.8));
+    transform: scale(1.05);
+  }
+}
+
+.auth-loader-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--text-pure);
+}
+
+.auth-loader-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.auth-loader-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #080d14;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border-tactical);
+  margin-top: 4px;
+}
+
+.auth-loader-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--f1-cyan), var(--f1-green));
+  width: 40%;
+  border-radius: var(--radius-full);
+  animation: loadingScan 1.6s infinite ease-in-out;
+}
+
+@keyframes loadingScan {
+  0% { transform: translateX(-100%); width: 30%; }
+  50% { width: 60%; }
+  100% { transform: translateX(350%); width: 30%; }
+}
+
+/* 2. Fullscreen Gatekeeper Screen */
+.auth-gatekeeper-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--bg-deep);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  min-height: 100dvh;
+}
+
+.auth-gatekeeper-card {
+  max-width: 440px;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+  margin: auto;
+}
+
+.auth-gatekeeper-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.auth-gatekeeper-logo {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.auth-gatekeeper-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-gatekeeper-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--text-pure);
+  line-height: 1.1;
+}
+
+.auth-gatekeeper-subtitle {
+  font-size: 0.8rem;
+  color: var(--f1-green);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.auth-gatekeeper-badge-notice {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: var(--f1-cyan);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tabs */
+.auth-tabs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-card-elevated);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-tactical);
+  gap: 4px;
+}
+
+.auth-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn.active {
+  background: var(--bg-card);
+  color: var(--f1-green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.auth-error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--f1-red);
+  color: #fca5a5;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin: 2px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-tactical);
+}
+
+.auth-divider span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auth-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group-tactical {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group-tactical label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.auth-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-link-cyan {
+  background: none;
+  border: none;
+  color: var(--f1-cyan);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-submit-btn {
+  margin-top: 6px;
+  min-height: 50px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: var(--f1-green);
+  color: #000;
+  letter-spacing: 0.5px;
+}
+
+.auth-footer-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border-tactical);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.auth-project-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.auth-project-badge strong {
+  color: var(--text-primary);
+}
