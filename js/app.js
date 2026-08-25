@@ -13,6 +13,9 @@ import { SymptomAuditManager } from './symptoms.js';
 import { DecisionEngine } from './decision-engine.js';
 import { EmergencyCrisisManager } from './emergency.js';
 import { HistoryTelemetryManager } from './history.js';
+import { CloudSyncManager } from './cloud-sync.js';
+import { ReminderManager } from './reminders.js';
+import { MealTracker } from './meals.js';
 
 class AppController {
   constructor() {
@@ -25,6 +28,9 @@ class AppController {
     this.onboarding = new OnboardingManager();
     this.onboarding.init();
 
+    this.cloudSync = new CloudSyncManager();
+    this.cloudSync.init();
+
     this.ocrScanner = new LocalOCRScanner();
     this.ocrScanner.init();
 
@@ -34,11 +40,17 @@ class AppController {
     this.hydration = new HydrationTracker();
     this.hydration.init();
 
+    this.meals = new MealTracker();
+    this.meals.init();
+
     this.symptoms = new SymptomAuditManager();
     this.symptoms.init();
 
     this.decisionEngine = new DecisionEngine();
     this.decisionEngine.init();
+
+    this.reminders = new ReminderManager();
+    this.reminders.init();
 
     this.emergency = new EmergencyCrisisManager();
     this.emergency.init();

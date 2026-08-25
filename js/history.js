@@ -130,6 +130,7 @@ export class HistoryTelemetryManager {
       'Peso (kg)',
       'Cant. Síntomas',
       'Síntomas Detalle',
+      'Comidas (Des/Alm/Onc/Cen)',
       'Temp (°C)',
       'Presión Barométrica (hPa)'
     ];
@@ -150,6 +151,15 @@ export class HistoryTelemetryManager {
       const weight = r.weightKg || store.profile.weightKg || '';
       const symList = (r.symptoms || []).join('; ');
       const symCount = (r.symptoms || []).length;
+      
+      const m = r.meals || {};
+      const mealsStr = [
+        m.breakfast && m.breakfast.size ? `Des:${m.breakfast.size}` : '',
+        m.lunch && m.lunch.size ? `Alm:${m.lunch.size}` : '',
+        m.snack && m.snack.enabled && m.snack.size ? `Onc:${m.snack.size}` : '',
+        m.dinner && m.dinner.enabled && m.dinner.size ? `Cen:${m.dinner.size}` : ''
+      ].filter(Boolean).join(', ');
+
       const temp = r.weather && r.weather.temp !== null ? r.weather.temp : '';
       const press = r.weather && r.weather.pressureHpa !== null ? r.weather.pressureHpa : '';
 
@@ -167,6 +177,7 @@ export class HistoryTelemetryManager {
         weight,
         symCount,
         symList,
+        mealsStr,
         temp,
         press
       ];
@@ -203,7 +214,7 @@ export class HistoryTelemetryManager {
   exportCSV() {
     const allRecords = [store.today, ...store.history.filter(h => h.date !== store.today.date)];
     
-    let csv = 'Fecha,Estado_F1,Bateria_Percibida_Pct,Hidratacion_ml,Electrolitos_Registrado,FC_Reposo_bpm,Sueno_Profundo_h,Sueno_Total_h,SpO2_pct,Estres_Nivel,Peso_kg,Cantidad_Sintomas,Sintomas_Detalle,Temp_C,Presion_hPa\n';
+    let csv = 'Fecha,Estado_F1,Bateria_Percibida_Pct,Hidratacion_ml,Electrolitos_Registrado,FC_Reposo_bpm,Sueno_Profundo_h,Sueno_Total_h,SpO2_pct,Estres_Nivel,Peso_kg,Cantidad_Sintomas,Sintomas_Detalle,Comidas_Nutricion,Temp_C,Presion_hPa\n';
 
     allRecords.forEach(r => {
       const date = r.date || '';
@@ -219,10 +230,19 @@ export class HistoryTelemetryManager {
       const weight = r.weightKg || store.profile.weightKg || '';
       const symList = (r.symptoms || []).join(';');
       const symCount = (r.symptoms || []).length;
+      
+      const m = r.meals || {};
+      const mealsStr = [
+        m.breakfast && m.breakfast.size ? `Des:${m.breakfast.size}` : '',
+        m.lunch && m.lunch.size ? `Alm:${m.lunch.size}` : '',
+        m.snack && m.snack.enabled && m.snack.size ? `Onc:${m.snack.size}` : '',
+        m.dinner && m.dinner.enabled && m.dinner.size ? `Cen:${m.dinner.size}` : ''
+      ].filter(Boolean).join('; ');
+
       const temp = r.weather && r.weather.temp !== null ? r.weather.temp : '';
       const press = r.weather && r.weather.pressureHpa !== null ? r.weather.pressureHpa : '';
 
-      csv += `"${date}","${f1}",${battery},${hyd},"${elec}",${rhr},${deep},${totalSleep},${spo2},${stress},${weight},${symCount},"${symList}",${temp},${press}\n`;
+      csv += `"${date}","${f1}",${battery},${hyd},"${elec}",${rhr},${deep},${totalSleep},${spo2},${stress},${weight},${symCount},"${symList}","${mealsStr}",${temp},${press}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

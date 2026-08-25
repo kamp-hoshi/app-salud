@@ -1,9 +1,9 @@
 /**
  * PIT CREW TELEMETRY & HEALTH (DISAUTONOMÍA / POTS / PACING V4.0 MASTER)
- * SERVICE WORKER - OFFLINE-FIRST CACHING STRATEGY V4.1.0
+ * SERVICE WORKER - OFFLINE-FIRST CACHING & NOTIFICATIONS V4.4.0
  */
 
-const CACHE_NAME = 'pitcrew-telemetry-v4.3.0';
+const CACHE_NAME = 'pitcrew-telemetry-v4.4.0';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -20,8 +20,11 @@ const ASSETS_TO_CACHE = [
   './js/local-ocr.js',
   './js/weather-telemetry.js',
   './js/hydration.js',
+  './js/meals.js',
   './js/symptoms.js',
   './js/decision-engine.js',
+  './js/reminders.js',
+  './js/cloud-sync.js',
   './js/emergency.js',
   './js/history.js',
   './assets/f1-badge.svg'
@@ -51,14 +54,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Notification Click Event - Focus / Open App on Telemetry
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./#telemetry');
+      }
+    })
+  );
+});
+
 // Fetch Event - Cache First with Network Fallback
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // For Open-Meteo API, use Network First with no cache
-  if (url.hostname.includes('open-meteo.com')) {
+  // For Open-Meteo API or Firebase CDN, use Network First with fallback
+  if (url.hostname.includes('open-meteo.com') || url.hostname.includes('gstatic.com') || url.hostname.includes('googleapis.com')) {
     event.respondWith(
       fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'offline' }), {
         headers: { 'Content-Type': 'application/json' }

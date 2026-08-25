@@ -109,6 +109,13 @@ export class DecisionEngine {
       reasons.push(`Saturación SpO2 baja (${t.spo2}%)`);
     }
 
+    // Digestive Pacing (Splanchnic pooling check)
+    const meals = t.meals || {};
+    const hasHeavyMeal = Object.values(meals).some(m => m && m.enabled && m.size === 'heavy');
+    if (hasHeavyMeal) {
+      reasons.push('Comida copiosa registrada: flujo sanguíneo derivado a digestión (riesgo de pooling esplácnico y fatiga postprandial)');
+    }
+
     // RED CRITERIA (Strict physiological safety)
     if (battery < 40 || allSymptoms.includes('chassis_horizontal') || acuteCount >= 4) {
       return {
@@ -123,7 +130,7 @@ export class DecisionEngine {
     }
 
     // AMBER CRITERIA (Safety Car Pacing)
-    if (battery <= 70 || acuteCount >= 1 || weatherAlert || (t.stressLevel && t.stressLevel > 60)) {
+    if (battery <= 70 || acuteCount >= 1 || weatherAlert || (t.stressLevel && t.stressLevel > 60) || hasHeavyMeal) {
       return {
         status: 'AMBER',
         title: '🟡 SAFETY CAR (Precaución y Pacing Táctico)',
@@ -448,6 +455,38 @@ export class DecisionEngine {
             Último registro oficial: ${t.symptomsSavedAt}
           </div>
         ` : ''}
+      </div>
+
+      <!-- 4. REGISTRO NUTRICIONAL & PACING DIGESTIVO HOY -->
+      <div class="card-tactical accent-amber">
+        <div class="card-header-clean">
+          <div class="card-title-tactical">
+            <span class="icon">🍽️</span>
+            <span>Pacing Digestivo & Comidas de Hoy</span>
+          </div>
+          <a href="#telemetry" class="badge badge-green" style="text-decoration: none;">REGISTRAR</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+          ${[
+            { key: 'breakfast', label: '☕ Desayuno' },
+            { key: 'lunch', label: '🍲 Almuerzo' },
+            { key: 'snack', label: '🥪 Once' },
+            { key: 'dinner', label: '🍽️ Cena' }
+          ].map(m => {
+            const data = (t.meals && t.meals[m.key]) || {};
+            if (data.enabled === false) return '';
+            const sizeLabel = data.size === 'heavy' ? '🔴 Copioso' : data.size === 'normal' ? '🟡 Normal' : data.size === 'light' ? '🟢 Liviano' : 'Sin registrar';
+            return `
+              <div style="background: var(--bg-card-elevated); padding: 8px 10px; border-radius: var(--radius-md); border: 1px solid var(--border-tactical);">
+                <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-primary);">${m.label} ${data.time ? `<span style="color: var(--text-muted); font-size: 0.72rem;">(${data.time})</span>` : ''}</div>
+                <div style="font-size: 0.82rem; font-weight: bold; margin-top: 3px; color: ${data.size === 'heavy' ? 'var(--f1-red)' : data.size === 'normal' ? 'var(--f1-amber)' : data.size === 'light' ? 'var(--f1-green)' : 'var(--text-muted)'};">
+                  ${sizeLabel}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
       </div>
     `;
   }

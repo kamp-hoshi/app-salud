@@ -37,13 +37,17 @@
         <div class="brand-titles">
           <div class="brand-title">
             <span>PIT CREW</span>
-            <span class="neon-tag">V4.2</span>
+            <span class="neon-tag">V4.4</span>
           </div>
           <div id="header-user-diag" class="brand-subtitle">POTS / DISAUTONOMÍA</div>
         </div>
       </div>
 
       <div class="header-status-group">
+        <button id="header-user-badge-btn" type="button" class="status-pill" style="cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid var(--border-tactical); color: var(--text-primary); display: flex; align-items: center; gap: 6px; padding: 4px 10px;" title="Cuentas y Sincronización en la Nube">
+          <span id="header-user-sync-dot" class="status-dot offline"></span>
+          <span id="header-user-name" style="font-size: 0.78rem; font-weight: bold;">Nube</span>
+        </button>
         <div class="status-pill live-gps" title="Estado de Telemetría GPS">
           <span id="header-gps-dot" class="status-dot active"></span>
           <span>GPS</span>
@@ -220,7 +224,24 @@
           </div>
         </div>
 
-        <!-- E. AMBIENT WEATHER TELEMETRY CARD -->
+        <!-- E. REGISTRO NUTRICIONAL & PACING DIGESTIVO -->
+        <div class="card-tactical accent-amber">
+          <div class="card-header-clean">
+            <div class="card-title-tactical">
+              <span class="icon">🍽️</span>
+              <span>Registro Nutricional & Pacing Digestivo</span>
+            </div>
+            <span class="badge badge-amber">1 TOQUE</span>
+          </div>
+
+          <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.4;">
+            Registra el tamaño de tus comidas con 1 toque. Comidas abundantes derivan sangre al abdomen y detonan fatiga o mareos (pooling esplácnico):
+          </div>
+
+          <div id="meals-tracker-container" class="meals-grid-container" style="margin-top: 10px;"></div>
+        </div>
+
+        <!-- F. AMBIENT WEATHER TELEMETRY CARD -->
         <div class="card-tactical accent-cyan">
           <div class="card-header-clean">
             <div class="card-title-tactical">
@@ -377,9 +398,70 @@
       </section>
 
       <!-- ================================================================= -->
-      <!-- VIEW 5: AJUSTES Y CALIBRACIÓN DE CHASIS (LÍNEA BASE & RUTINA) -->
+      <!-- VIEW 5: AJUSTES, RECORDATORIOS Y CUENTAS EN LA NUBE -->
       <!-- ================================================================= -->
       <section id="view-settings" class="view-section">
+
+        <!-- 1. RECORDATORIOS / NOTIFICACIONES PROGRAMABLES (BOXES) -->
+        <div class="card-tactical accent-cyan">
+          <div class="card-header-clean">
+            <div class="card-title-tactical">
+              <span class="icon">🔔</span>
+              <span>Recordatorios de Telemetría (Boxes)</span>
+            </div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input id="toggle-reminders-master" type="checkbox" checked style="accent-color: var(--f1-green); width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-size: 0.82rem; font-weight: bold; color: var(--text-pure);">Activo</span>
+            </label>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+            Configura tus horarios diarios. La app te enviará la alerta oficial de Boxes para actualizar batería, agua y síntomas:
+          </div>
+
+          <div id="reminder-permission-banner" class="hidden" style="background: rgba(245, 158, 11, 0.12); border: 1px solid var(--f1-amber); border-radius: var(--radius-md); padding: 10px; margin-top: 8px;">
+            <div style="font-size: 0.82rem; color: var(--f1-amber); font-weight: bold;">
+              ⚠️ Notificaciones del sistema no autorizadas aún
+            </div>
+            <button id="btn-grant-notification-permission" type="button" class="btn-secondary-tactical" style="margin-top: 6px; min-height: 38px; font-size: 0.82rem;">
+              🔔 Activar Notificaciones en este dispositivo
+            </button>
+          </div>
+
+          <div id="reminders-times-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;"></div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+            <button id="btn-add-reminder-time" type="button" class="btn-secondary-tactical" style="font-size: 0.85rem; font-weight: bold;">
+              ➕ Agregar Horario
+            </button>
+            <button id="btn-test-reminder-alert" type="button" class="btn-secondary-tactical" style="font-size: 0.85rem; font-weight: bold; border-color: var(--f1-cyan); color: var(--f1-cyan);">
+              🔔 Probar Alerta
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. CUENTAS Y SINCRONIZACIÓN EN LA NUBE (MULTI-DISPOSITIVO) -->
+        <div class="card-tactical accent-green">
+          <div class="card-header-clean">
+            <div class="card-title-tactical">
+              <span class="icon">☁️</span>
+              <span>Cuentas & Nube Multi-dispositivo</span>
+            </div>
+            <span class="badge badge-green">FIRESTORE / GOOGLE</span>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+            Conecta tu cuenta para ver y editar tu telemetría tanto en tu celular como en tu computador sin perder datos.
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="btn-open-cloud-account-settings" type="button" class="btn-primary-tactical" style="background: var(--f1-green); color: #000; font-size: 0.95rem; font-weight: bold;">
+              👤 Administrar Cuenta & Nube
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. CALIBRACIÓN BASAL DE CHASIS -->
         <div class="card-tactical">
           <div class="card-header-clean">
             <div class="card-title-tactical">
@@ -648,6 +730,101 @@
     <!-- ================================================================= -->
     <!-- MODALS & OVERLAYS -->
     <!-- ================================================================= -->
+
+    <!-- MODAL 0: CLOUD AUTH & MULTI-DEVICE SYNC MODAL -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+      <div class="modal-sheet" style="max-width: 440px;">
+        <div class="flex-between">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">☁️</span>
+            <h3 id="auth-modal-title" style="font-size: 1.15rem; font-weight: bold; color: var(--text-pure); text-transform: uppercase;">
+              Cuentas & Nube Multi-dispositivo
+            </h3>
+          </div>
+          <button id="btn-close-auth-modal" type="button" class="badge" style="background: none; border: 1px solid var(--border-tactical); color: var(--text-muted); cursor: pointer; font-size: 1rem;">✕</button>
+        </div>
+
+        <div id="auth-error-banner" class="hidden" style="background: rgba(239,68,68,0.15); border: 1px solid var(--f1-red); color: #fca5a5; padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: bold;"></div>
+
+        <!-- VIEW A: USER LOGGED IN ACCOUNT VIEW -->
+        <div id="auth-account-view" class="hidden" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: var(--bg-card-elevated); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-tactical);">
+            <div style="font-size: 0.78rem; font-weight: bold; color: var(--f1-green); text-transform: uppercase;">Cuenta Conectada</div>
+            <div id="auth-account-email" style="font-size: 1rem; font-weight: bold; color: var(--text-pure); margin-top: 4px;">usuario@gmail.com</div>
+            <div id="auth-sync-status-text" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Sincronización activa con Firestore</div>
+          </div>
+
+          <button id="btn-manual-sync-now" type="button" class="btn-primary-tactical" style="background: var(--f1-green); color: #000; font-weight: bold;">
+            🔄 Sincronizar Ahora con la Nube
+          </button>
+
+          <button id="btn-auth-logout" type="button" class="btn-secondary-tactical" style="border-color: var(--f1-red); color: #fca5a5;">
+            🚪 Cerrar Sesión
+          </button>
+        </div>
+
+        <!-- VIEW B: AUTH FORMS (LOGIN / REGISTER) -->
+        <div id="auth-forms-view" style="display: flex; flex-direction: column; gap: 14px;">
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            Inicia sesión para sincronizar tu telemetría entre tu celular y computador:
+          </p>
+
+          <!-- Google Sign-In Button -->
+          <button id="btn-google-signin" type="button" class="btn-google-auth">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continuar con Google</span>
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 10px; margin: 4px 0;">
+            <div style="flex: 1; height: 1px; background: var(--border-tactical);"></div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">o con correo</span>
+            <div style="flex: 1; height: 1px; background: var(--border-tactical);"></div>
+          </div>
+
+          <!-- Email/Password Form -->
+          <form id="form-email-auth" style="display: flex; flex-direction: column; gap: 10px;">
+            <div id="auth-name-group" class="hidden" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary);">Nombre / Apodo</label>
+              <input id="auth-name-input" type="text" placeholder="ej. Karla" class="input-tactical">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary);">Correo Electrónico</label>
+              <input id="auth-email-input" type="email" placeholder="tu@correo.com" class="input-tactical" required>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary);">Contraseña</label>
+              <input id="auth-password-input" type="password" placeholder="••••••••" class="input-tactical" required>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+              <button id="btn-forgot-password" type="button" style="background: none; border: none; color: var(--f1-cyan); font-size: 0.78rem; cursor: pointer; padding: 2px;">
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+
+            <button id="btn-email-submit" type="submit" class="btn-primary-tactical" style="margin-top: 4px;">
+              Iniciar Sesión
+            </button>
+          </form>
+
+          <div id="auth-switch-row" style="text-align: center; margin-top: 4px;">
+            <button id="btn-switch-auth-register" type="button" style="background: none; border: none; color: var(--text-secondary); font-size: 0.82rem; cursor: pointer;">
+              ¿No tienes cuenta? <strong style="color: var(--f1-green);">Regístrate aquí</strong>
+            </button>
+            <button id="btn-switch-auth-login" type="button" class="hidden" style="background: none; border: none; color: var(--text-secondary); font-size: 0.82rem; cursor: pointer;">
+              ¿Ya tienes cuenta? <strong style="color: var(--f1-green);">Inicia sesión aquí</strong>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL 1: ONBOARDING CALIBRATION WIZARD (FIRST LAUNCH) -->
     <div id="onboarding-modal" class="modal-backdrop hidden">

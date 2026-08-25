@@ -25,6 +25,8 @@ class StateStore {
       sodiumTargetG: '5g (Suero)',
       medicationType: 'Tratamiento natural / Suplementos',
       medicationNotes: '',
+      remindersEnabled: true,
+      reminderTimes: ['09:00', '15:00', '21:00'],
       triggers: ['Calor', 'Cambios de clima/presión', 'Falta de sueño'],
       contacts: [
         { name: 'Contacto Principal', phone: '+56912345678', relation: 'Familiar' }
@@ -70,6 +72,12 @@ class StateStore {
       stressLevel: null, // Puntuación de estrés (1-100, ej. 32)
       symptoms: [],
       symptomsSavedAt: null, // Fecha y hora oficial de guardado
+      meals: {
+        breakfast: { enabled: true, time: '08:30', size: null },
+        lunch: { enabled: true, time: '13:30', size: null },
+        snack: { enabled: false, time: '17:30', size: null },
+        dinner: { enabled: true, time: '20:30', size: null }
+      },
       weather: {
         temp: null,
         humidity: null,

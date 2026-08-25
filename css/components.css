@@ -569,3 +569,169 @@
   gap: 18px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
 }
+
+/* 9. Meal Nutritional & Digestive Pacing Cards */
+.meals-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.meal-card-item {
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all var(--transition-fast);
+}
+
+.meal-card-item.disabled {
+  opacity: 0.55;
+  background: rgba(10, 17, 26, 0.4);
+}
+
+.meal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.meal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meal-icon {
+  font-size: 1.2rem;
+}
+
+.meal-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-pure);
+}
+
+.meal-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meal-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.meal-toggle-checkbox {
+  accent-color: var(--f1-green);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.meal-time-input {
+  min-height: 36px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: 105px;
+  text-align: center;
+}
+
+.meal-size-selector-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.btn-meal-size {
+  min-height: 44px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-tactical);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 4px;
+  transition: all var(--transition-fast);
+}
+
+.btn-meal-size:active {
+  transform: scale(0.97);
+}
+
+.btn-meal-size.active-light {
+  border-color: var(--f1-green);
+  background: rgba(0, 255, 157, 0.12);
+  color: var(--f1-green);
+  box-shadow: 0 0 10px var(--f1-green-glow);
+}
+
+.btn-meal-size.active-normal {
+  border-color: var(--f1-amber);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--f1-amber);
+  box-shadow: 0 0 10px var(--f1-amber-glow);
+}
+
+.btn-meal-size.active-heavy {
+  border-color: var(--f1-red);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--f1-red);
+  box-shadow: 0 0 12px var(--f1-red-glow);
+}
+
+/* 10. Status Dots & Cloud Auth Header Pill */
+.status-dot.blinking {
+  background: var(--f1-amber);
+  box-shadow: 0 0 8px var(--f1-amber-glow);
+  animation: pulse-sync 1s infinite alternate;
+}
+
+.status-dot.offline {
+  background: #6b7280;
+  box-shadow: none;
+}
+
+@keyframes pulse-sync {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+.btn-google-auth {
+  min-height: 48px;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all var(--transition-fast);
+}
+
+.btn-google-auth:active {
+  transform: scale(0.98);
+  background: #f3f4f6;
+}
