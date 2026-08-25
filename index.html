@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="App de telemetría táctica, pacing y prevención de crisis para disautonomía, POTS e intolerancia ortostática. Identidad F1 Pit Crew.">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description"
+    content="App de telemetría táctica, pacing y prevención de crisis para disautonomía, POTS e intolerancia ortostática. Identidad F1 Pit Crew.">
   <meta name="theme-color" content="#05080c">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,10 +25,11 @@
   <link rel="stylesheet" href="./css/f1-theme.css">
   <link rel="stylesheet" href="./css/crisis.css">
 </head>
+
 <body>
 
   <div id="app-root">
-    
+
     <!-- 1. TOP TELEMETRY HEADER -->
     <header class="telemetry-header">
       <div class="header-brand">
@@ -57,8 +61,10 @@
             📲 Instalar Pit Crew como App PWA
           </div>
           <div style="display: flex; gap: 8px;">
-            <button id="btn-pwa-install" class="badge badge-green" style="border: none; cursor: pointer;">INSTALAR</button>
-            <button id="btn-pwa-dismiss" class="badge" style="background: none; border: 1px solid var(--border-tactical); color: var(--text-muted); cursor: pointer;">✕</button>
+            <button id="btn-pwa-install" class="badge badge-green"
+              style="border: none; cursor: pointer;">INSTALAR</button>
+            <button id="btn-pwa-dismiss" class="badge"
+              style="background: none; border: 1px solid var(--border-tactical); color: var(--text-muted); cursor: pointer;">✕</button>
           </div>
         </div>
       </div>
@@ -70,7 +76,7 @@
       <!-- VIEW 1: TELEMETRÍA (DAILY MORNING INGEST & DASHBOARD) -->
       <!-- ================================================================= -->
       <section id="view-telemetry" class="view-section active">
-        
+
         <!-- A. DECISION SEMAPHORE CARD PREVIEW -->
         <div id="f1-semaphore-box" class="f1-semaphore-container"></div>
 
@@ -89,7 +95,8 @@
               <div id="fuel-level-fill" class="fuel-level-fill"></div>
               <div class="fuel-gauge-content">
                 <div id="fuel-amount-display" class="fuel-amount">0 <span class="unit">ml</span></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">Toca para ajustar valor exacto</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">Toca para ajustar valor
+                  exacto</div>
               </div>
             </div>
 
@@ -151,7 +158,8 @@
           </div>
 
           <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.4;">
-            Sube tu captura de <strong>Mi Fitness</strong>. Extraerá automáticamente los 4 datos clave: <strong>Pulso (LPM), Sueño (h/min), Estrés y Oxígeno (SpO2)</strong>.
+            Sube tu captura de <strong>Mi Fitness</strong>. Extraerá automáticamente los 4 datos clave: <strong>Pulso
+              (LPM), Sueño (h/min), Estrés y Oxígeno (SpO2)</strong>.
           </div>
 
           <div id="ocr-dropzone" class="scanner-dropzone">
@@ -165,7 +173,8 @@
             <div class="ocr-progress-bar">
               <div id="ocr-progress-fill" class="ocr-progress-fill"></div>
             </div>
-            <div id="ocr-progress-text" style="font-size: 0.8rem; color: var(--f1-cyan); font-weight: bold; text-align: center;">
+            <div id="ocr-progress-text"
+              style="font-size: 0.8rem; color: var(--f1-cyan); font-weight: bold; text-align: center;">
               Procesando en el dispositivo...
             </div>
           </div>
@@ -174,31 +183,38 @@
 
           <!-- MANUAL QUICK INGEST FALLBACK (4 CORE VITALS) -->
           <div style="border-top: 1px solid var(--border-tactical); padding-top: 14px; margin-top: 4px;">
-            <div style="font-size: 0.82rem; font-weight: bold; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
+            <div
+              style="font-size: 0.82rem; font-weight: bold; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
               ⚡ Ingreso Manual Rápido (4 Datos Clave)
             </div>
             <div class="manual-inputs-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
               <div class="manual-input-item">
                 <label for="manual-rhr-input">❤️ Pulso (LPM / bpm)</label>
-                <input id="manual-rhr-input" type="number" placeholder="ej. 68" min="30" max="220" class="input-tactical">
+                <input id="manual-rhr-input" type="number" placeholder="ej. 68" min="30" max="220"
+                  class="input-tactical">
               </div>
               <div class="manual-input-item">
                 <label for="manual-sleep-input">🌙 Sueño (h)</label>
-                <input id="manual-sleep-input" type="number" step="0.1" placeholder="ej. 6.1" min="0" max="24" class="input-tactical">
+                <input id="manual-sleep-input" type="text" placeholder="ej. 6h 4min o 6.1"
+                  class="input-tactical">
               </div>
               <div class="manual-input-item">
                 <label for="manual-stress-input">⚡ Estrés (1-100)</label>
-                <input id="manual-stress-input" type="number" placeholder="ej. 32" min="1" max="100" class="input-tactical">
+                <input id="manual-stress-input" type="number" placeholder="ej. 32" min="1" max="100"
+                  class="input-tactical">
               </div>
               <div class="manual-input-item">
                 <label for="manual-spo2-input">🫁 Oxígeno SpO2 (%)</label>
-                <input id="manual-spo2-input" type="number" placeholder="ej. 95" min="70" max="100" class="input-tactical">
+                <input id="manual-spo2-input" type="number" placeholder="ej. 95" min="70" max="100"
+                  class="input-tactical">
               </div>
             </div>
-            <button id="btn-save-manual-metrics" type="button" class="btn-secondary-tactical" style="margin-top: 12px; min-height: 48px; font-size: 0.88rem; font-weight: bold;">
+            <button id="btn-save-manual-metrics" type="button" class="btn-secondary-tactical"
+              style="margin-top: 12px; min-height: 48px; font-size: 0.88rem; font-weight: bold;">
               💾 Guardar Métricas Manuales
             </button>
-            <div id="metrics-saved-banner" class="hidden" style="color: var(--f1-green); font-size: 0.82rem; text-align: center; margin-top: 6px; font-weight: bold;">
+            <div id="metrics-saved-banner" class="hidden"
+              style="color: var(--f1-green); font-size: 0.82rem; text-align: center; margin-top: 6px; font-weight: bold;">
               ✔ Telemetría guardada correctamente
             </div>
           </div>
@@ -211,7 +227,8 @@
               <span class="icon">⛅</span>
               <span>Telemetría Ambiental (Barómetro)</span>
             </div>
-            <span class="badge" style="background: rgba(6,182,212,0.1); color: var(--f1-cyan); border: 1px solid rgba(6,182,212,0.3); font-weight: bold;">
+            <span class="badge"
+              style="background: rgba(6,182,212,0.1); color: var(--f1-cyan); border: 1px solid rgba(6,182,212,0.3); font-weight: bold;">
               OPEN-METEO
             </span>
           </div>
@@ -254,26 +271,32 @@
           </div>
 
           <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-            Toca con 1 solo toque lo que sientes en este momento y presiona <strong>Guardar Síntomas de Hoy</strong> para registrar la fecha y hora oficial en tu historial:
+            Toca con 1 solo toque lo que sientes en este momento y presiona <strong>Guardar Síntomas de Hoy</strong>
+            para registrar la fecha y hora oficial en tu historial:
           </div>
 
           <div style="margin-top: 4px;">
-            <button id="btn-save-symptoms" type="button" class="btn-primary-tactical" style="background: var(--f1-green); color: #000; font-size: 1.05rem; font-weight: bold; min-height: 56px;">
+            <button id="btn-save-symptoms" type="button" class="btn-primary-tactical"
+              style="background: var(--f1-green); color: #000; font-size: 1.05rem; font-weight: bold; min-height: 56px;">
               💾 GUARDAR SÍNTOMAS DE HOY
             </button>
 
-            <div id="symptoms-saved-banner" class="hidden" style="background: rgba(0, 255, 157, 0.12); border: 2px solid var(--f1-green); border-radius: 8px; padding: 10px 14px; margin-top: 8px; text-align: center;">
+            <div id="symptoms-saved-banner" class="hidden"
+              style="background: rgba(0, 255, 157, 0.12); border: 2px solid var(--f1-green); border-radius: 8px; padding: 10px 14px; margin-top: 8px; text-align: center;">
               <div style="font-size: 0.95rem; font-weight: bold; color: var(--f1-green);">
                 ✅ Síntomas guardados correctamente en tu historial
               </div>
-              <div id="symptoms-saved-timestamp" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;"></div>
+              <div id="symptoms-saved-timestamp"
+                style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;"></div>
             </div>
           </div>
 
-          <div id="symptoms-audit-container" style="display: flex; flex-direction: column; gap: 18px; margin-top: 14px;"></div>
+          <div id="symptoms-audit-container"
+            style="display: flex; flex-direction: column; gap: 18px; margin-top: 14px;"></div>
 
           <div style="display: flex; gap: 10px; margin-top: 14px;">
-            <button id="btn-clear-symptoms" type="button" class="btn-secondary-tactical" style="font-size: 0.88rem; font-weight: bold;">
+            <button id="btn-clear-symptoms" type="button" class="btn-secondary-tactical"
+              style="font-size: 0.88rem; font-weight: bold;">
               🗑️ Limpiar Todo
             </button>
           </div>
@@ -292,7 +315,7 @@
       <!-- VIEW 4: SOS Y CRISIS MULTI-CONTACTO -->
       <!-- ================================================================= -->
       <section id="view-sos" class="view-section">
-        
+
         <div class="card-tactical accent-red">
           <div class="card-header-clean">
             <div class="card-title-tactical">
@@ -303,7 +326,8 @@
           </div>
 
           <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.4;">
-            Al tocar el botón de un contacto, la app obtiene tus coordenadas GPS exactas y abre WhatsApp con el mensaje de emergencia pre-escrito:
+            Al tocar el botón de un contacto, la app obtiene tus coordenadas GPS exactas y abre WhatsApp con el mensaje
+            de emergencia pre-escrito:
           </div>
 
           <div id="crisis-flares-container" class="crisis-flare-group" style="margin-top: 8px;"></div>
@@ -320,10 +344,12 @@
           </div>
 
           <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.4;">
-            Pantalla gigante en fondo negro con instrucciones críticas para personas a tu alrededor si no puedes hablar o te desvaneces.
+            Pantalla gigante en fondo negro con instrucciones críticas para personas a tu alrededor si no puedes hablar
+            o te desvaneces.
           </div>
 
-          <button id="btn-open-medical-shield" type="button" class="btn-primary-tactical" style="background: #eab308; color: #000; font-size: 1.05rem; font-weight: bold; box-shadow: 0 4px 20px rgba(234,179,8,0.35);">
+          <button id="btn-open-medical-shield" type="button" class="btn-primary-tactical"
+            style="background: #eab308; color: #000; font-size: 1.05rem; font-weight: bold; box-shadow: 0 4px 20px rgba(234,179,8,0.35);">
             🛡️ ABRIR ESCUDO MÉDICO FULLSCREEN
           </button>
         </div>
@@ -339,7 +365,8 @@
           </div>
 
           <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.4;">
-            Genera y descarga una imagen con tus datos médicos y números de emergencia para usar como fondo permanente en tu teléfono.
+            Genera y descarga una imagen con tus datos médicos y números de emergencia para usar como fondo permanente
+            en tu teléfono.
           </div>
 
           <button id="btn-open-wallpaper-modal" type="button" class="btn-secondary-tactical" style="font-weight: bold;">
@@ -363,9 +390,11 @@
           </div>
 
           <form id="settings-form" style="display: flex; flex-direction: column; gap: 16px;">
-            
+
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Diagnóstico / Subtipo</label>
+              <label
+                style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Diagnóstico
+                / Subtipo</label>
               <select id="settings-diagnosis" class="input-tactical">
                 <option value="POTS">POTS (Taquicardia Postural Ortostática)</option>
                 <option value="Síncope Vasovagal">Síncope Vasovagal / Neurocardiogénico</option>
@@ -377,28 +406,37 @@
             <!-- DATOS DE HISTORIAL / CHASIS (PESO Y ALTURA) -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Peso Corporal (kg)</label>
+                <label
+                  style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Peso
+                  Corporal (kg)</label>
                 <input id="settings-weight" type="number" step="0.1" class="input-tactical" value="62">
               </div>
               <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Altura (cm)</label>
+                <label
+                  style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Altura
+                  (cm)</label>
                 <input id="settings-height" type="number" class="input-tactical" value="165">
               </div>
             </div>
 
             <!-- CONTEXTO DE RUTINA LABORAL -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Contexto de Rutina</label>
+              <label
+                style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Contexto
+                de Rutina</label>
               <select id="settings-routine" class="input-tactical">
                 <option value="sitting">Trabajo sentado / frente a pantallas (normaliza fatiga visual)</option>
-                <option value="standing">Trabajo principalmente de pie / en movimiento (normaliza pesadez de piernas)</option>
+                <option value="standing">Trabajo principalmente de pie / en movimiento (normaliza pesadez de piernas)
+                </option>
                 <option value="mixed">Rutina mixta / Hogar</option>
               </select>
             </div>
 
             <!-- TOLERANCIA ORTOSTÁTICA BASAL -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Tolerancia Ortostática de Base</label>
+              <label
+                style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Tolerancia
+                Ortostática de Base</label>
               <select id="settings-tolerance" class="input-tactical">
                 <option value="<5min">&lt; 5 minutos de pie quieta</option>
                 <option value="10-15min" selected>10 a 15 minutos de pie quieta</option>
@@ -412,19 +450,26 @@
                 🛡️ Síntomas Crónicos de Base (Habituales en tu vida diaria)
               </label>
               <p style="font-size: 0.76rem; color: var(--text-muted); margin: 4px 0 8px 0;">
-                Marca los síntomas que tienes habitualmente. El sistema no castigará el semáforo por ellos; solo las alertas nuevas activarán precaución.
+                Marca los síntomas que tienes habitualmente. El sistema no castigará el semáforo por ellos; solo las
+                alertas nuevas activarán precaución.
               </p>
-              <div id="settings-chronic-symptoms-container" style="display: grid; grid-template-columns: 1fr; gap: 4px; max-height: 180px; overflow-y: auto; background: var(--bg-card-elevated); padding: 10px; border-radius: var(--radius-md);"></div>
+              <div id="settings-chronic-symptoms-container"
+                style="display: grid; grid-template-columns: 1fr; gap: 4px; max-height: 180px; overflow-y: auto; background: var(--bg-card-elevated); padding: 10px; border-radius: var(--radius-md);">
+              </div>
             </div>
 
             <!-- METAS DE HIDRATACIÓN Y SODIO -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Meta Agua (ml)</label>
+                <label
+                  style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Meta
+                  Agua (ml)</label>
                 <input id="settings-water-target" type="number" class="input-tactical" value="3000">
               </div>
               <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Meta Sodio</label>
+                <label
+                  style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Meta
+                  Sodio</label>
                 <select id="settings-sodium-target" class="input-tactical">
                   <option value="3g">3g</option>
                   <option value="5g (Suero)" selected>5g (Suero)</option>
@@ -434,7 +479,9 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Tratamiento / Medicación</label>
+              <label
+                style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Tratamiento
+                / Medicación</label>
               <select id="settings-medtype" class="input-tactical">
                 <option value="Tratamiento natural / Suplementos">Tratamiento natural / Suplementos</option>
                 <option value="Fármacos convencionales (Betabloqueantes, Fludro, etc.)">Fármacos convencionales</option>
@@ -444,19 +491,25 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Notas de Tratamiento</label>
-              <input id="settings-mednotes" type="text" placeholder="ej. Propranolol 10mg am, Suero 1L tarde" class="input-tactical">
+              <label
+                style="font-size: 0.82rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">Notas
+                de Tratamiento</label>
+              <input id="settings-mednotes" type="text" placeholder="ej. Propranolol 10mg am, Suero 1L tarde"
+                class="input-tactical">
             </div>
 
             <!-- RED DE APOYO CONFIGURATION -->
             <div style="border-top: 1px solid var(--border-tactical); padding-top: 14px;">
-              <div style="font-size: 0.88rem; font-weight: bold; color: var(--text-pure); text-transform: uppercase; margin-bottom: 10px;">
+              <div
+                style="font-size: 0.88rem; font-weight: bold; color: var(--text-pure); text-transform: uppercase; margin-bottom: 10px;">
                 🚨 Red de Apoyo (Hasta 3 Contactos SOS)
               </div>
 
               <!-- Contact 1 -->
-              <div style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
-                <div style="font-size: 0.78rem; font-weight: bold; color: var(--f1-green); margin-bottom: 6px;">CONTACTO 1 (PRINCIPAL)</div>
+              <div
+                style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
+                <div style="font-size: 0.78rem; font-weight: bold; color: var(--f1-green); margin-bottom: 6px;">CONTACTO
+                  1 (PRINCIPAL)</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                   <input id="settings-c1-name" type="text" placeholder="Nombre" class="input-tactical">
                   <input id="settings-c1-phone" type="tel" placeholder="+569... o +34..." class="input-tactical">
@@ -464,8 +517,10 @@
               </div>
 
               <!-- Contact 2 -->
-              <div style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
-                <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 6px;">CONTACTO 2 (OPCIONAL)</div>
+              <div
+                style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
+                <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 6px;">
+                  CONTACTO 2 (OPCIONAL)</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                   <input id="settings-c2-name" type="text" placeholder="Nombre" class="input-tactical">
                   <input id="settings-c2-phone" type="tel" placeholder="Teléfono" class="input-tactical">
@@ -473,8 +528,10 @@
               </div>
 
               <!-- Contact 3 -->
-              <div style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
-                <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 6px;">CONTACTO 3 (OPCIONAL)</div>
+              <div
+                style="background: var(--bg-card-elevated); padding: 12px; border-radius: var(--radius-md); margin-bottom: 10px;">
+                <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 6px;">
+                  CONTACTO 3 (OPCIONAL)</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                   <input id="settings-c3-name" type="text" placeholder="Nombre" class="input-tactical">
                   <input id="settings-c3-phone" type="tel" placeholder="Teléfono" class="input-tactical">
@@ -486,7 +543,8 @@
               💾 Guardar Calibración
             </button>
 
-            <div id="settings-saved-banner" class="hidden" style="color: var(--f1-green); font-size: 0.85rem; font-weight: bold; text-align: center;">
+            <div id="settings-saved-banner" class="hidden"
+              style="color: var(--f1-green); font-size: 0.85rem; font-weight: bold; text-align: center;">
               ✔ Cambios guardados en tu dispositivo
             </div>
           </form>
@@ -503,15 +561,18 @@
           </div>
 
           <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-            Copia directamente una tabla organizada lista para pegar en <strong>Google Sheets</strong> con un solo toque o descarga en formato CSV/JSON para tus citas médicas.
+            Copia directamente una tabla organizada lista para pegar en <strong>Google Sheets</strong> con un solo toque
+            o descarga en formato CSV/JSON para tus citas médicas.
           </div>
 
           <div style="margin-top: 8px;">
-            <button id="btn-copy-sheets" type="button" class="btn-primary-tactical" style="background: #107c41; color: #ffffff; font-size: 1rem; font-weight: bold; box-shadow: 0 4px 18px rgba(16,124,65,0.4);">
+            <button id="btn-copy-sheets" type="button" class="btn-primary-tactical"
+              style="background: #107c41; color: #ffffff; font-size: 1rem; font-weight: bold; box-shadow: 0 4px 18px rgba(16,124,65,0.4);">
               📋 COPIAR TABLA PARA GOOGLE SHEETS
             </button>
-            
-            <div id="sheets-copy-banner" class="hidden" style="background: rgba(16,124,65,0.2); border: 2px solid #107c41; border-radius: 8px; padding: 10px 14px; margin-top: 8px; text-align: center;">
+
+            <div id="sheets-copy-banner" class="hidden"
+              style="background: rgba(16,124,65,0.2); border: 2px solid #107c41; border-radius: 8px; padding: 10px 14px; margin-top: 8px; text-align: center;">
               <div style="font-size: 0.95rem; font-weight: bold; color: #4ade80;">
                 ✅ ¡Datos copiados al portapapeles!
               </div>
@@ -522,16 +583,19 @@
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <button id="btn-export-csv" type="button" class="btn-secondary-tactical" style="font-size: 0.88rem; font-weight: bold;">
+            <button id="btn-export-csv" type="button" class="btn-secondary-tactical"
+              style="font-size: 0.88rem; font-weight: bold;">
               📄 Descargar CSV
             </button>
-            <button id="btn-export-json" type="button" class="btn-secondary-tactical" style="font-size: 0.88rem; font-weight: bold;">
+            <button id="btn-export-json" type="button" class="btn-secondary-tactical"
+              style="font-size: 0.88rem; font-weight: bold;">
               💾 Respaldo JSON
             </button>
           </div>
 
           <div style="margin-top: 10px;">
-            <button id="btn-trigger-import" type="button" class="btn-secondary-tactical" style="font-size: 0.82rem; min-height: 44px; color: var(--text-muted);">
+            <button id="btn-trigger-import" type="button" class="btn-secondary-tactical"
+              style="font-size: 0.82rem; min-height: 44px; color: var(--text-muted);">
               📥 Importar Copia de Seguridad
             </button>
             <input id="import-file-input" type="file" accept=".json" class="hidden">
@@ -601,28 +665,38 @@
         <form id="onboarding-form" style="display: flex; flex-direction: column; gap: 14px;">
           <!-- 1. Diagnosis Chips -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">1. Diagnóstico / Subtipo</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">1.
+              Diagnóstico / Subtipo</label>
             <input id="onboard-diagnosis-input" type="hidden" value="POTS">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
               <button type="button" class="btn-preset onboarding-diag-chip active" data-val="POTS">POTS</button>
-              <button type="button" class="btn-preset onboarding-diag-chip" data-val="Síncope Vasovagal">Vasovagal</button>
-              <button type="button" class="btn-preset onboarding-diag-chip" data-val="Intolerancia Ortostática">Intol. Ortostática</button>
+              <button type="button" class="btn-preset onboarding-diag-chip"
+                data-val="Síncope Vasovagal">Vasovagal</button>
+              <button type="button" class="btn-preset onboarding-diag-chip" data-val="Intolerancia Ortostática">Intol.
+                Ortostática</button>
               <button type="button" class="btn-preset onboarding-diag-chip" data-val="En estudio">En estudio</button>
             </div>
           </div>
 
           <!-- 2. Historical Body Data (Weight & Height) -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">2. Datos de Historial (Chasis)</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">2.
+              Datos de Historial (Chasis)</label>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-              <input id="onboard-weight-input" type="number" step="0.1" placeholder="Peso (kg)" value="60" class="input-tactical">
-              <input id="onboard-height-input" type="number" placeholder="Altura (cm)" value="165" class="input-tactical">
+              <input id="onboard-weight-input" type="number" step="0.1" placeholder="Peso (kg)" value="60"
+                class="input-tactical">
+              <input id="onboard-height-input" type="number" placeholder="Altura (cm)" value="165"
+                class="input-tactical">
             </div>
           </div>
 
           <!-- 3. Work Routine Context -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">3. Contexto de Rutina</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">3.
+              Contexto de Rutina</label>
             <select id="onboard-routine-select" class="input-tactical" style="margin-top: 6px;">
               <option value="sitting" selected>Trabajo sentado / frente a pantallas (normaliza fatiga visual)</option>
               <option value="standing">Trabajo principalmente de pie (normaliza pesadez de piernas)</option>
@@ -632,7 +706,9 @@
 
           <!-- 4. Baseline Orthostatic Tolerance -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">4. Tolerancia Ortostática Basal</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">4.
+              Tolerancia Ortostática Basal</label>
             <select id="onboard-tolerance-select" class="input-tactical" style="margin-top: 6px;">
               <option value="<5min">&lt; 5 minutos de pie quieta</option>
               <option value="10-15min" selected>10 a 15 minutos de pie quieta</option>
@@ -648,12 +724,16 @@
             <p style="font-size: 0.74rem; color: var(--text-muted); margin: 2px 0 6px 0;">
               Márcalos para no penalizar el semáforo cuando sean tus síntomas habituales:
             </p>
-            <div id="onboard-chronic-symptoms-container" style="display: grid; grid-template-columns: 1fr; gap: 4px; max-height: 140px; overflow-y: auto; background: var(--bg-card-elevated); padding: 8px; border-radius: var(--radius-md);"></div>
+            <div id="onboard-chronic-symptoms-container"
+              style="display: grid; grid-template-columns: 1fr; gap: 4px; max-height: 140px; overflow-y: auto; background: var(--bg-card-elevated); padding: 8px; border-radius: var(--radius-md);">
+            </div>
           </div>
 
           <!-- 6. Daily Hydration Target -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">6. Meta Diaria de Hidratación</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">6.
+              Meta Diaria de Hidratación</label>
             <input id="onboard-water-input" type="hidden" value="3000">
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px;">
               <button type="button" class="btn-preset onboarding-water-chip" data-val="2500">2.5 L</button>
@@ -664,7 +744,9 @@
 
           <!-- 7. Sodium Goal -->
           <div>
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">7. Meta de Sodio / Suero</label>
+            <label
+              style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;">7.
+              Meta de Sodio / Suero</label>
             <select id="onboard-sodium-select" class="input-tactical" style="margin-top: 6px;">
               <option value="3g">3g Sodio / Sal</option>
               <option value="5g (Suero)" selected>5g (Suero Oral / Electrolitos)</option>
@@ -674,7 +756,8 @@
 
           <!-- 8. Emergency Contacts -->
           <div style="border-top: 1px solid var(--border-tactical); padding-top: 10px;">
-            <label style="font-size: 0.8rem; font-weight: bold; color: var(--f1-red); text-transform: uppercase;">8. Contacto de Emergencia SOS (WhatsApp)</label>
+            <label style="font-size: 0.8rem; font-weight: bold; color: var(--f1-red); text-transform: uppercase;">8.
+              Contacto de Emergencia SOS (WhatsApp)</label>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
               <input id="onboard-c1-name" type="text" placeholder="Nombre (ej. Pareja)" class="input-tactical" required>
               <input id="onboard-c1-phone" type="tel" placeholder="+569... / +34..." class="input-tactical" required>
@@ -699,13 +782,16 @@
         </p>
 
         <div style="display: flex; align-items: center; gap: 8px;">
-          <input id="hydration-manual-input" type="number" step="50" min="0" max="10000" class="input-tactical" style="font-size: 1.5rem; text-align: center;">
+          <input id="hydration-manual-input" type="number" step="50" min="0" max="10000" class="input-tactical"
+            style="font-size: 1.5rem; text-align: center;">
           <span style="font-weight: bold; color: var(--f1-green);">ML</span>
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 8px;">
-          <button id="btn-save-hydration-edit" type="button" class="btn-primary-tactical" style="flex: 1;">GUARDAR</button>
-          <button id="btn-cancel-hydration-edit" type="button" class="btn-secondary-tactical" style="flex: 1;">CANCELAR</button>
+          <button id="btn-save-hydration-edit" type="button" class="btn-primary-tactical"
+            style="flex: 1;">GUARDAR</button>
+          <button id="btn-cancel-hydration-edit" type="button" class="btn-secondary-tactical"
+            style="flex: 1;">CANCELAR</button>
         </div>
       </div>
     </div>
@@ -713,7 +799,8 @@
     <!-- MODAL 3: SOS WALLPAPER GENERATOR -->
     <div id="wallpaper-generator-modal" class="modal-backdrop hidden">
       <div class="modal-sheet" style="max-width: 420px; align-items: center;">
-        <h3 style="font-size: 1.15rem; font-weight: bold; color: var(--text-pure); text-transform: uppercase; text-align: center;">
+        <h3
+          style="font-size: 1.15rem; font-weight: bold; color: var(--text-pure); text-transform: uppercase; text-align: center;">
           📱 Fondo de Pantalla SOS
         </h3>
         <p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center;">
@@ -737,7 +824,7 @@
 
     <!-- MODAL 4: FULLSCREEN BYSTANDER MEDICAL SHIELD (ESCUDO MÉDICO REDISEÑADO) -->
     <div id="medical-shield-fullscreen" class="medical-shield-fullscreen hidden">
-      
+
       <div class="shield-header-alert">
         <div class="shield-alert-title">🛑 ¡POR FAVOR AYÚDAME!</div>
         <div class="shield-alert-sub">ESTOY EN CRISIS Y NO PUEDO HABLAR. LEE ESTO:</div>
@@ -747,14 +834,16 @@
         <div class="shield-step critical">
           <div class="shield-step-number">1</div>
           <div class="shield-step-text">
-            <strong>NO ME LEVANTES BRUSCAMENTE.</strong> Mi cerebro no está recibiendo suficiente flujo sanguíneo y puedo desmayarme.
+            <strong>NO ME LEVANTES BRUSCAMENTE.</strong> Mi cerebro no está recibiendo suficiente flujo sanguíneo y
+            puedo desmayarme.
           </div>
         </div>
 
         <div class="shield-step">
           <div class="shield-step-number">2</div>
           <div class="shield-step-text">
-            <strong>Ayúdame a recostarme en el suelo</strong> y <strong>eleva mis piernas a 45°</strong> (sobre una silla o contra la pared) para que la sangre regrese a mi cabeza.
+            <strong>Ayúdame a recostarme en el suelo</strong> y <strong>eleva mis piernas a 45°</strong> (sobre una
+            silla o contra la pared) para que la sangre regrese a mi cabeza.
           </div>
         </div>
 
@@ -790,4 +879,5 @@
   <!-- Main JavaScript Orchestrator -->
   <script type="module" src="./js/app.js"></script>
 </body>
+
 </html>

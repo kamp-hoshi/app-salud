@@ -164,7 +164,7 @@ export class EmergencyCrisisManager {
 
     const sendWithLocation = (lat, lng) => {
       const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : 'Ubicación GPS no disponible';
-      const message = `Hola ${contactName}, te escribo porque estoy teniendo una crisis de disautonomía / mareo fuerte y necesito tu ayuda o que estés atento/a. Estoy aquí: ${mapsUrl}`;
+      const message = `Hola ${contactName}, estoy teniendo una crisis de disautonomía, necesito tu ayuda o que estés atento/a. Estoy aquí: ${mapsUrl}`;
       const encodedMsg = encodeURIComponent(message);
       const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
       

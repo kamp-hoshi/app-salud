@@ -7,6 +7,60 @@
 import { store } from './state.js';
 import { soundFx } from './audio-synth.js';
 
+/**
+ * Utility to parse any sleep string (e.g. "6h 4min", "6 h 4 min", "6h 4m", "6.1", "45min")
+ * and convert to decimal hours: horas + (minutos / 60)
+ */
+export function parseSleepStringToHours(rawStr) {
+  if (rawStr === null || rawStr === undefined) return null;
+  if (typeof rawStr === 'number') {
+    return isNaN(rawStr) || rawStr < 0 ? null : parseFloat(rawStr.toFixed(1));
+  }
+  
+  const text = String(rawStr).trim().toLowerCase();
+  if (!text) return null;
+
+  // 1. "6h 4min", "6 h 4 min", "6h 4m", "6h4min", "6h 04m", "6h, 4min", "6h 4"
+  const hoursMinutesMatch = text.match(/(\d+)\s*(?:h|hrs?|horas?)\s*[,]?\s*(\d+)\s*(?:min|mins?|m|minutos?)?/i);
+  if (hoursMinutesMatch) {
+    const hrs = parseInt(hoursMinutesMatch[1], 10) || 0;
+    const mins = hoursMinutesMatch[2] ? parseInt(hoursMinutesMatch[2], 10) : 0;
+    const total = hrs + (mins / 60);
+    return parseFloat(total.toFixed(1));
+  }
+
+  // 2. "6h", "7 hrs", "8 horas"
+  const hoursOnlyMatch = text.match(/^(\d+)\s*(?:h|hrs?|horas?)$/i);
+  if (hoursOnlyMatch) {
+    return parseFloat(parseInt(hoursOnlyMatch[1], 10).toFixed(1));
+  }
+
+  // 3. "45min", "30 min", "50m" (less than 1 hour)
+  const minutesOnlyMatch = text.match(/^(\d+)\s*(?:min|mins?|m|minutos?)$/i);
+  if (minutesOnlyMatch) {
+    const mins = parseInt(minutesOnlyMatch[1], 10) || 0;
+    return parseFloat((mins / 60).toFixed(1));
+  }
+
+  // 4. Decimal: "6.1", "6,1", "7.5", "8"
+  const cleanDecimal = text.replace(',', '.');
+  const decimalMatch = cleanDecimal.match(/^(\d+(?:\.\d+)?)$/);
+  if (decimalMatch) {
+    const val = parseFloat(decimalMatch[1]);
+    if (!isNaN(val) && val >= 0 && val <= 24) {
+      return parseFloat(val.toFixed(1));
+    }
+  }
+
+  // 5. Fallback general parseFloat
+  const parsed = parseFloat(cleanDecimal);
+  if (!isNaN(parsed) && parsed >= 0 && parsed <= 24) {
+    return parseFloat(parsed.toFixed(1));
+  }
+
+  return null;
+}
+
 export class LocalOCRScanner {
   constructor() {
     this.dropzone = document.getElementById('ocr-dropzone');
@@ -35,10 +89,17 @@ export class LocalOCRScanner {
     if (this.inputRhr && t.rhr !== null && t.rhr !== undefined) {
       this.inputRhr.value = t.rhr;
     }
-    if (this.inputSleep && t.totalSleepHours !== null && t.totalSleepHours !== undefined) {
-      this.inputSleep.value = t.totalSleepHours;
-    } else if (this.inputSleep && t.deepSleepHours !== null && t.deepSleepHours !== undefined) {
-      this.inputSleep.value = t.deepSleepHours;
+    if (this.inputSleep) {
+      if (t.totalSleepHours !== null && t.totalSleepHours !== undefined) {
+        // Only update if not currently focused by user
+        if (document.activeElement !== this.inputSleep) {
+          this.inputSleep.value = `${t.totalSleepHours} h`;
+        }
+      } else if (t.deepSleepHours !== null && t.deepSleepHours !== undefined) {
+        if (document.activeElement !== this.inputSleep) {
+          this.inputSleep.value = `${t.deepSleepHours} h`;
+        }
+      }
     }
     if (this.inputStress && t.stressLevel !== null && t.stressLevel !== undefined) {
       this.inputStress.value = t.stressLevel;
@@ -87,17 +148,22 @@ export class LocalOCRScanner {
 
   saveManualInputs() {
     const rhrVal = this.inputRhr ? parseInt(this.inputRhr.value, 10) : null;
-    const sleepVal = this.inputSleep ? parseFloat(this.inputSleep.value) : null;
+    const rawSleepText = this.inputSleep ? this.inputSleep.value.trim() : '';
+    const sleepVal = parseSleepStringToHours(rawSleepText);
     const stressVal = this.inputStress ? parseInt(this.inputStress.value, 10) : null;
     const spo2Val = this.inputSpo2 ? parseInt(this.inputSpo2.value, 10) : null;
 
     store.updateToday({
       rhr: !isNaN(rhrVal) && rhrVal > 0 ? rhrVal : null,
-      totalSleepHours: !isNaN(sleepVal) && sleepVal >= 0 ? sleepVal : null,
-      deepSleepHours: !isNaN(sleepVal) && sleepVal >= 0 ? sleepVal : null,
+      totalSleepHours: sleepVal !== null && sleepVal >= 0 ? sleepVal : null,
+      deepSleepHours: sleepVal !== null && sleepVal >= 0 ? sleepVal : null,
       stressLevel: !isNaN(stressVal) && stressVal >= 0 ? Math.min(100, stressVal) : null,
       spo2: !isNaN(spo2Val) && spo2Val > 0 ? Math.min(100, spo2Val) : null
     });
+
+    if (this.inputSleep && sleepVal !== null) {
+      this.inputSleep.value = `${sleepVal} h`;
+    }
 
     soundFx.playTactileClick();
 
@@ -272,7 +338,7 @@ export class LocalOCRScanner {
 
   // Optimized Parser for Mi Fitness Real Capture Cards
   parseMiFitnessTelemetry(rawText) {
-    if (!rawText) return { rhr: null, sleep_hours: null, stress_level: null, spo2: null };
+    if (!rawText) return { rhr: null, sleep_hours: null, stress_level: null, spo2: null, raw_sleep_str: null };
 
     const text = rawText.replace(/\r?\n/g, ' ').toLowerCase();
     const result = {
@@ -303,8 +369,8 @@ export class LocalOCRScanner {
 
     // 2. SUEÑO (ej. "6h 4min", "6h 4m", "6 h 4 min", "7h 30m", "6.1 h")
     const sleepPatterns = [
-      /(\d+)\s*(?:h|hrs?|horas?)\s*(\d+)\s*(?:min|mins?|m|minutos?)/i,
-      /(?:sueño|sueno|sleep|duraci[oó]n)\D{0,15}(\d+)\s*(?:h|hrs?)\s*(\d+)?\s*(?:m|min)?/i,
+      /(\d+)\s*(?:h|hrs?|horas?)\s*[,]?\s*(\d+)\s*(?:min|mins?|m|minutos?)/i,
+      /(?:sueño|sueno|sleep|duraci[oó]n)\D{0,15}(\d+)\s*(?:h|hrs?)\s*[,]?\s*(\d+)?\s*(?:m|min|minutos?)?/i,
       /(\d+[.,]\d+)\s*(?:h|hrs?|horas?)/i
     ];
 
@@ -312,7 +378,7 @@ export class LocalOCRScanner {
       const match = text.match(pat);
       if (match) {
         if (match[2] !== undefined && match[2] !== null) {
-          // Format: 6h 4min
+          // Format: 6h 4min -> horas + (minutos / 60)
           const hrs = parseInt(match[1], 10) || 0;
           const mins = parseInt(match[2], 10) || 0;
           const totalHours = hrs + (mins / 60);
@@ -371,7 +437,9 @@ export class LocalOCRScanner {
 
   applyParsedData(data) {
     if (this.inputRhr && data.rhr) this.inputRhr.value = data.rhr;
-    if (this.inputSleep && data.sleep_hours) this.inputSleep.value = data.sleep_hours;
+    if (this.inputSleep && (data.raw_sleep_str || data.sleep_hours)) {
+      this.inputSleep.value = data.raw_sleep_str || `${data.sleep_hours} h`;
+    }
     if (this.inputStress && data.stress_level) this.inputStress.value = data.stress_level;
     if (this.inputSpo2 && data.spo2) this.inputSpo2.value = data.spo2;
 

@@ -3,7 +3,7 @@
  * SERVICE WORKER - OFFLINE-FIRST CACHING STRATEGY V4.1.0
  */
 
-const CACHE_NAME = 'pitcrew-telemetry-v4.2.0';
+const CACHE_NAME = 'pitcrew-telemetry-v4.3.0';
 
 const ASSETS_TO_CACHE = [
   './',
